@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function NewProjectPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function NewProjectPage() {
   const [researchType, setResearchType] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,9 +39,20 @@ export default function NewProjectPage() {
         throw new Error(data.error || 'Failed to create project')
       }
 
+      toast({
+        variant: 'success',
+        title: 'Project created!',
+        description: `${title} has been successfully created.`,
+      })
+
       router.push(`/dashboard/projects/${data.project.id}`)
     } catch (err: any) {
       setError(err.message)
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create project',
+        description: err.message,
+      })
     } finally {
       setLoading(false)
     }

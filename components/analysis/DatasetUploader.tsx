@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Upload, FileText, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
 
 interface DatasetUploaderProps {
   projectId: string
@@ -15,6 +16,7 @@ export function DatasetUploader({ projectId, onUploadComplete }: DatasetUploader
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const { toast } = useToast()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -50,11 +52,22 @@ export function DatasetUploader({ projectId, onUploadComplete }: DatasetUploader
       setSuccess(true)
       setFile(null)
 
+      toast({
+        variant: 'success',
+        title: 'Dataset uploaded successfully!',
+        description: `${file.name} has been parsed and added to your project.`,
+      })
+
       if (onUploadComplete) {
         onUploadComplete()
       }
     } catch (err: any) {
       setError(err.message)
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: err.message,
+      })
     } finally {
       setUploading(false)
     }

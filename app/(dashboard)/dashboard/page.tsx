@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { FolderOpen, PlusCircle, FileText, Database, Zap } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { Analytics } from '@/components/dashboard/Analytics'
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<any[]>([])
@@ -78,6 +79,12 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
         </Card>
+      </div>
+
+      {/* Analytics Dashboard */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-6">Research Analytics</h2>
+        <Analytics />
       </div>
 
       {/* Recent Projects */}

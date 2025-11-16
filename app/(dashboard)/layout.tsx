@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Zap, Home, FolderOpen, Settings, LogOut, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CommandPalette } from '@/components/shared/CommandPalette'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 export default function DashboardLayout({
   children,
@@ -15,6 +17,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [projects, setProjects] = useState<any[]>([])
 
   useEffect(() => {
     checkAuth()
@@ -29,6 +32,13 @@ export default function DashboardLayout({
       }
       const data = await res.json()
       setUser(data.user)
+
+      // Fetch projects for command palette
+      const projectsRes = await fetch('/api/projects')
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json()
+        setProjects(projectsData.projects || [])
+      }
     } catch (error) {
       router.push('/login')
     } finally {
@@ -57,11 +67,12 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center space-x-2">
             <Zap className="h-6 w-6 text-blue-600" />
             <span className="text-xl font-bold">ElctrDc</span>
           </Link>
+          <ThemeToggle />
         </div>
 
         {/* Navigation */}
@@ -125,6 +136,9 @@ export default function DashboardLayout({
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+
+      {/* Command Palette */}
+      <CommandPalette projects={projects} />
     </div>
   )
 }

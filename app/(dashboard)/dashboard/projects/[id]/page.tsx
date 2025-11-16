@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { DatasetUploader } from '@/components/analysis/DatasetUploader'
 import { PlotlyChart } from '@/components/analysis/PlotlyChart'
+import { DataTable } from '@/components/analysis/DataTable'
 import { AIChat } from '@/components/ai/AIChat'
 import { Database, FileText, BarChart3, Upload, Trash2 } from 'lucide-react'
 import { formatDate, formatFileSize } from '@/lib/utils'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -19,6 +21,7 @@ export default function ProjectDetailPage() {
   const [selectedDataset, setSelectedDataset] = useState<any>(null)
   const [selectedVisualization, setSelectedVisualization] = useState<any>(null)
   const [creatingViz, setCreatingViz] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (projectId) {
@@ -61,8 +64,18 @@ export default function ProjectDetailPage() {
 
       await fetchProject()
       setSelectedVisualization(data.visualization)
+
+      toast({
+        variant: 'success',
+        title: 'Visualization created!',
+        description: `${plotType} plot has been generated successfully.`,
+      })
     } catch (error: any) {
-      alert(error.message)
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create visualization',
+        description: error.message,
+      })
     } finally {
       setCreatingViz(false)
     }
@@ -74,8 +87,16 @@ export default function ProjectDetailPage() {
     try {
       await fetch(`/api/datasets/${datasetId}`, { method: 'DELETE' })
       await fetchProject()
-    } catch (error) {
-      console.error('Failed to delete dataset:', error)
+      toast({
+        title: 'Dataset deleted',
+        description: 'The dataset has been removed from your project.',
+      })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete dataset',
+        description: error.message,
+      })
     }
   }
 
@@ -266,12 +287,13 @@ export default function ProjectDetailPage() {
 
             {/* Dataset Details */}
             {selectedDataset && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Dataset Details</CardTitle>
-                  <CardDescription>{selectedDataset.name}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Dataset Details</CardTitle>
+                    <CardDescription>{selectedDataset.name}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-medium mb-2">Information</h4>
                     <dl className="space-y-1 text-sm">
@@ -366,6 +388,16 @@ export default function ProjectDetailPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Data Preview Table */}
+              {selectedDataset.parsedData?.data && (
+                <DataTable
+                  data={selectedDataset.parsedData.data}
+                  title={`Data Preview: ${selectedDataset.name}`}
+                  description={`${selectedDataset.technique} • ${selectedDataset.rowCount} rows × ${selectedDataset.columnCount} columns`}
+                />
+              )}
+            </div>
             )}
           </div>
         </TabsContent>

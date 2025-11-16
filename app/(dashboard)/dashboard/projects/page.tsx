@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PlusCircle, Search, FileText, Database, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<any[]>([])
   const [filteredProjects, setFilteredProjects] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchProjects()
@@ -50,8 +52,16 @@ export default function ProjectsPage() {
     try {
       await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
       fetchProjects()
-    } catch (error) {
-      console.error('Failed to delete project:', error)
+      toast({
+        title: 'Project deleted',
+        description: 'The project has been successfully removed.',
+      })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete project',
+        description: error.message,
+      })
     }
   }
 
