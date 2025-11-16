@@ -9,6 +9,7 @@ import { CommandPalette } from '@/components/shared/CommandPalette'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { KeyboardShortcutsModal } from '@/components/shared/KeyboardShortcutsModal'
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour'
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { useKeyboardShortcuts } from '@/lib/hooks/useKeyboardShortcuts'
 
 export default function DashboardLayout({
@@ -150,7 +151,12 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        {children}
+        <div className="p-8 pt-6">
+          <Breadcrumbs />
+          <div className="-mx-8 -my-6">
+            {children}
+          </div>
+        </div>
       </main>
 
       {/* Command Palette */}
