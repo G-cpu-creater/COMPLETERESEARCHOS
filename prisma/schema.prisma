@@ -1,0 +1,196 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String    @map("password_hash")
+  avatarUrl     String?   @map("avatar_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  projects      Project[]
+  conversations AIConversation[]
+
+  @@map("users")
+}
+
+model Project {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  title         String
+  description   String?
+  status        String   @default("active") // active, archived, deleted
+  researchType  String?  @map("research_type") // battery, fuel_cell, corrosion, etc.
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastAccessed  DateTime @default(now()) @map("last_accessed")
+  settings      Json     @default("{}")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pages         Page[]
+  datasets      Dataset[]
+  papers        Paper[]
+  workflows     Workflow[]
+  visualizations Visualization[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Page {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  parentPageId  String?  @map("parent_page_id")
+  title         String
+  icon          String?
+  coverImage    String?  @map("cover_image")
+  position      Int
+  properties    Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentPage    Page?    @relation("PageToPage", fields: [parentPageId], references: [id], onDelete: Cascade)
+  childPages    Page[]   @relation("PageToPage")
+  blocks        Block[]
+  conversations AIConversation[]
+
+  @@index([projectId])
+  @@index([parentPageId])
+  @@map("pages")
+}
+
+model Block {
+  id            String   @id @default(uuid())
+  pageId        String   @map("page_id")
+  parentBlockId String?  @map("parent_block_id")
+  type          String   // text, heading, code, table, dataset, paper, etc.
+  position      Int
+  content       Json
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parentBlock   Block?   @relation("BlockToBlock", fields: [parentBlockId], references: [id], onDelete: Cascade)
+  childBlocks   Block[]  @relation("BlockToBlock")
+
+  @@index([pageId])
+  @@index([type])
+  @@map("blocks")
+}
+
+model Dataset {
+  id              String   @id @default(uuid())
+  projectId       String   @map("project_id")
+  name            String
+  technique       String   // CV, EIS, CA, CP, battery_cycling, etc.
+  instrument      String?  // BioLogic, Gamry, Neware, etc.
+  fileFormat      String?  @map("file_format") // mpt, dta, csv, etc.
+  originalFilename String? @map("original_filename")
+  fileUrl         String   @map("file_url")
+  parsedData      Json?    @map("parsed_data")
+  metadata        Json?
+  rowCount        Int?     @map("row_count")
+  columnCount     Int?     @map("column_count")
+  fileSize        BigInt?  @map("file_size")
+  uploadedAt      DateTime @default(now()) @map("uploaded_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  visualizations  Visualization[]
+
+  @@index([projectId])
+  @@index([technique])
+  @@map("datasets")
+}
+
+model Visualization {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  datasetId     String?  @map("dataset_id")
+  name          String
+  plotType      String   @map("plot_type") // cv_plot, nyquist, bode, etc.
+  config        Json     // Plotly.js configuration
+  thumbnailUrl  String?  @map("thumbnail_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dataset       Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  conversations AIConversation[]
+
+  @@index([projectId])
+  @@index([datasetId])
+  @@map("visualizations")
+}
+
+model Paper {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  title         String
+  authors       String[]
+  journal       String?
+  year          Int?
+  doi           String?
+  abstract      String?  @db.Text
+  fileUrl       String?  @map("file_url")
+  extractedText String?  @map("extracted_text") @db.Text
+  metadata      Json?
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([doi])
+  @@map("papers")
+}
+
+model Workflow {
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  name          String
+  workflowType  String   @map("workflow_type") // battery_cycling, cv_analysis, etc.
+  steps         Json
+  status        String   @default("draft") // draft, active, completed
+  results       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([workflowType])
+  @@map("workflows")
+}
+
+model AIConversation {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  projectId       String?  @map("project_id")
+  pageId          String?  @map("page_id")
+  visualizationId String?  @map("visualization_id")
+  contextType     String   @map("context_type") // page, visualization, general
+  messages        Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page            Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  visualization   Visualization? @relation(fields: [visualizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@map("ai_conversations")
+}
