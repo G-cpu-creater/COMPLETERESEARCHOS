@@ -40,7 +40,7 @@ export function PlotlyChart({ config, className = '' }: PlotlyChartProps) {
     },
   }
 
-  const plotConfig = {
+  const plotConfig: any = {
     responsive: true,
     displayModeBar: true,
     displaylogo: false,

@@ -133,25 +133,47 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div>
+            <p className="text-4xl font-bold text-blue-600">50+</p>
+            <p className="text-gray-600 mt-2">File Formats</p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-blue-600">10k+</p>
+            <p className="text-gray-600 mt-2">Datasets Analyzed</p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-blue-600">100%</p>
+            <p className="text-gray-600 mt-2">Open Source</p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-blue-600">24/7</p>
+            <p className="text-gray-600 mt-2">Cloud Access</p>
+          </div>
+        </div>
+      </section>
+
       {/* Supported Instruments Section */}
       <section className="container mx-auto px-4 py-20 bg-gray-50 rounded-lg my-20">
         <h2 className="text-3xl font-bold text-center mb-12">
           Supported Instruments
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
+          <div className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <p className="font-semibold text-gray-700">BioLogic</p>
             <p className="text-sm text-gray-500">.mpt, .mpr</p>
           </div>
-          <div>
+          <div className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <p className="font-semibold text-gray-700">Gamry</p>
             <p className="text-sm text-gray-500">.dta</p>
           </div>
-          <div>
+          <div className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <p className="font-semibold text-gray-700">Neware</p>
             <p className="text-sm text-gray-500">Battery cyclers</p>
           </div>
-          <div>
+          <div className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <p className="font-semibold text-gray-700">Generic CSV</p>
             <p className="text-sm text-gray-500">Universal format</p>
           </div>

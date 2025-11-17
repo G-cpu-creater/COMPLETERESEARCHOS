@@ -8,6 +8,8 @@ import { FolderOpen, PlusCircle, FileText, Database, Zap, AlertCircle } from 'lu
 import { formatDate } from '@/lib/utils'
 import { Analytics } from '@/components/dashboard/Analytics'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
+import { StatsOverview } from '@/components/dashboard/StatsOverview'
+import { RecentActivity } from '@/components/dashboard/RecentActivity'
 import { ProjectCardSkeleton } from '@/components/ui/skeleton'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
@@ -48,6 +50,11 @@ export default function DashboardPage() {
         <p className="text-gray-600">
           Your integrated electrochemistry research platform
         </p>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="mb-8">
+        <StatsOverview />
       </div>
 
       {/* Quick Actions */}
