@@ -63,14 +63,12 @@ export function FilePreview({ file, isOpen, onClose }: FilePreviewProps) {
 
   const Icon = getFileIcon()
 
-  // Mock data for preview
+  // Sample preview data for demonstration
   const mockTableData = [
-    ['Time (s)', 'Voltage (V)', 'Current (A)', 'Power (W)'],
-    ['0.0', '0.00', '0.000', '0.000'],
-    ['1.0', '0.15', '0.025', '0.004'],
-    ['2.0', '0.30', '0.048', '0.014'],
-    ['3.0', '0.45', '0.068', '0.031'],
-    ['4.0', '0.60', '0.085', '0.051'],
+    ['Column 1', 'Column 2', 'Column 3', 'Column 4'],
+    ['...', '...', '...', '...'],
+    ['...', '...', '...', '...'],
+    ['...', '...', '...', '...'],
   ]
 
   return (

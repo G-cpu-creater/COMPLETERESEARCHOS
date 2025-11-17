@@ -82,22 +82,22 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" placeholder="John" />
+                  <Input id="firstName" placeholder="Enter first name" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" placeholder="Doe" />
+                  <Input id="lastName" placeholder="Enter last name" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="john@example.com" />
+                <Input id="email" type="email" placeholder="your.email@example.com" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="institution">Institution/Organization</Label>
-                <Input id="institution" placeholder="University of..." />
+                <Input id="institution" placeholder="Your institution name" />
               </div>
 
               <div className="space-y-2">
@@ -163,7 +163,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">Current Session</p>
-                    <p className="text-sm text-gray-500">Chrome on Ubuntu • Active now</p>
+                    <p className="text-sm text-gray-500">Your browser • Active now</p>
                   </div>
                   <Button variant="outline" size="sm">This device</Button>
                 </div>

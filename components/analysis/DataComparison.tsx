@@ -18,11 +18,8 @@ export function DataComparison() {
   const [selectedDatasets, setSelectedDatasets] = useState<Dataset[]>([])
   const [comparisonMode, setComparisonMode] = useState<'overlay' | 'sidebyside'>('overlay')
 
-  const availableDatasets: Dataset[] = [
-    { id: '1', name: 'CV_sample_01.csv', technique: 'CV', uploadedAt: '2024-01-15', rowCount: 1000 },
-    { id: '2', name: 'CV_sample_02.csv', technique: 'CV', uploadedAt: '2024-01-16', rowCount: 1050 },
-    { id: '3', name: 'EIS_data_01.mpt', technique: 'EIS', uploadedAt: '2024-01-17', rowCount: 500 },
-  ]
+  // TODO: Fetch available datasets from API
+  const availableDatasets: Dataset[] = []
 
   const addDataset = (dataset: Dataset) => {
     if (selectedDatasets.length < 4 && !selectedDatasets.find(d => d.id === dataset.id)) {
