@@ -11,7 +11,8 @@ import { PlotlyChart } from '@/components/analysis/PlotlyChart'
 import { DataTable } from '@/components/analysis/DataTable'
 import { DatasetStats } from '@/components/analysis/DatasetStats'
 import { AIChat } from '@/components/ai/AIChat'
-import { Database, FileText, BarChart3, Upload, Trash2 } from 'lucide-react'
+import { FileManager } from '@/components/files/FileManager'
+import { Database, FileText, BarChart3, Upload, Trash2, FolderOpen } from 'lucide-react'
 import { formatDate, formatFileSize } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -149,6 +150,10 @@ export default function ProjectDetailPage() {
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="files">
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Files
+          </TabsTrigger>
           <TabsTrigger value="data">
             Data ({project.datasets?.length || 0})
           </TabsTrigger>
@@ -230,6 +235,24 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Files Tab */}
+        <TabsContent value="files">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FolderOpen className="h-5 w-5 mr-2" />
+                Project Files
+              </CardTitle>
+              <CardDescription>
+                Organize your research files and documents in an Ubuntu-style file manager
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FileManager projectId={projectId} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Data Tab */}
