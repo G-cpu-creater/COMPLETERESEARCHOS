@@ -17,6 +17,8 @@ import {
   ArrowLeft,
   Upload,
   Download,
+  Eye,
+  X,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -25,6 +27,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { formatDate } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -73,6 +82,7 @@ export function FileManager({ projectId }: FileManagerProps) {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [previewFile, setPreviewFile] = useState<FileNode | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -264,6 +274,22 @@ export function FileManager({ projectId }: FileManagerProps) {
     })
   }
 
+  const openFile = (item: FileNode) => {
+    if (item.type === 'folder' || !item.fileData) return
+    setPreviewFile(item)
+  }
+
+  const getFileType = (filename: string): string => {
+    const ext = filename.split('.').pop()?.toLowerCase() || ''
+    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp'].includes(ext)) return 'image'
+    if (['pdf'].includes(ext)) return 'pdf'
+    if (['txt', 'md', 'json', 'xml', 'csv', 'log'].includes(ext)) return 'text'
+    if (['js', 'ts', 'tsx', 'jsx', 'py', 'css', 'html', 'java', 'cpp', 'c', 'go', 'rs'].includes(ext)) return 'code'
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return 'video'
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio'
+    return 'unknown'
+  }
+
   const getFileIcon = (file: FileNode) => {
     if (file.type === 'folder') return Folder
     const ext = file.name.split('.').pop()?.toLowerCase()
@@ -274,8 +300,101 @@ export function FileManager({ projectId }: FileManagerProps) {
 
   const currentItems = getCurrentFolder()
 
+  const renderFilePreview = () => {
+    if (!previewFile || !previewFile.fileData) return null
+
+    const fileType = getFileType(previewFile.name)
+
+    return (
+      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span className="truncate">{previewFile.name}</span>
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => downloadFile(previewFile)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </DialogTitle>
+            <DialogDescription>
+              {formatFileSize(previewFile.size)} • {formatDate(previewFile.createdAt)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 overflow-auto max-h-[70vh]">
+            {fileType === 'image' && (
+              <div className="flex items-center justify-center bg-gray-50 rounded p-4">
+                <img
+                  src={previewFile.fileData}
+                  alt={previewFile.name}
+                  className="max-w-full h-auto max-h-[600px] object-contain"
+                />
+              </div>
+            )}
+
+            {fileType === 'pdf' && (
+              <iframe
+                src={previewFile.fileData}
+                className="w-full h-[600px] border rounded"
+                title={previewFile.name}
+              />
+            )}
+
+            {fileType === 'video' && (
+              <video
+                src={previewFile.fileData}
+                controls
+                className="w-full max-h-[600px] bg-black rounded"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
+
+            {fileType === 'audio' && (
+              <div className="flex items-center justify-center bg-gray-50 rounded p-8">
+                <audio src={previewFile.fileData} controls className="w-full max-w-md">
+                  Your browser does not support the audio tag.
+                </audio>
+              </div>
+            )}
+
+            {(fileType === 'text' || fileType === 'code') && (
+              <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm overflow-auto">
+                <pre className="whitespace-pre-wrap">
+                  {/* Decode base64 text content */}
+                  {previewFile.fileData.startsWith('data:')
+                    ? atob(previewFile.fileData.split(',')[1])
+                    : 'Unable to preview file'}
+                </pre>
+              </div>
+            )}
+
+            {fileType === 'unknown' && (
+              <div className="text-center py-12 text-gray-500">
+                <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <p className="text-lg font-medium">Cannot preview this file type</p>
+                <p className="text-sm mt-1 mb-4">Download the file to view it</p>
+                <Button onClick={() => downloadFile(previewFile)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download File
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <div className="relative h-[600px] border rounded-lg overflow-hidden bg-white">
+      {renderFilePreview()}
       {/* Toolbar */}
       <div className="p-3 border-b flex items-center justify-between bg-gray-50">
         <div className="flex items-center space-x-2">
@@ -384,6 +503,8 @@ export function FileManager({ projectId }: FileManagerProps) {
                     onDoubleClick={() => {
                       if (item.type === 'folder') {
                         openFolder(index)
+                      } else {
+                        openFile(item)
                       }
                     }}
                   >
@@ -417,10 +538,16 @@ export function FileManager({ projectId }: FileManagerProps) {
                             Open
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => downloadFile(item)}>
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem onClick={() => openFile(item)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Open/Preview
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => downloadFile(item)}>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </DropdownMenuItem>
+                          </>
                         )}
                         <DropdownMenuItem onClick={() => renameItem(index)}>
                           <Edit className="h-4 w-4 mr-2" />
