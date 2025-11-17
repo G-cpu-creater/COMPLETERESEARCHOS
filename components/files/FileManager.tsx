@@ -605,86 +605,165 @@ export function FileManager({ projectId }: FileManagerProps) {
     if (!previewFile || !previewFile.fileData) return null
 
     const fileType = getFileType(previewFile.name)
+    const fileExtension = previewFile.name.split('.').pop()?.toUpperCase() || 'FILE'
 
     return (
       <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span className="truncate">{previewFile.name}</span>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-gray-50 to-gray-100">
+          {/* Header */}
+          <div className="px-6 py-4 border-b bg-white/80 backdrop-blur">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0 mr-4">
+                <div className="flex items-center space-x-2 mb-1">
+                  <div className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                    {fileExtension}
+                  </div>
+                  <DialogTitle className="text-lg font-semibold truncate">
+                    {previewFile.name}
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="flex items-center space-x-3 text-sm">
+                  <span className="flex items-center">
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    {formatFileSize(previewFile.size)}
+                  </span>
+                  <span className="text-gray-300">•</span>
+                  <span>{formatDate(previewFile.createdAt)}</span>
+                </DialogDescription>
+              </div>
               <div className="flex items-center space-x-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => downloadFile(previewFile)}
+                  className="shadow-sm"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setPreviewFile(null)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            </DialogTitle>
-            <DialogDescription>
-              {formatFileSize(previewFile.size)} • {formatDate(previewFile.createdAt)}
-            </DialogDescription>
-          </DialogHeader>
+            </div>
+          </div>
 
-          <div className="mt-4 overflow-auto max-h-[70vh]">
+          {/* Content */}
+          <div className="overflow-auto" style={{ maxHeight: 'calc(95vh - 100px)' }}>
             {fileType === 'image' && (
-              <div className="flex items-center justify-center bg-gray-50 rounded p-4">
-                <img
-                  src={previewFile.fileData}
-                  alt={previewFile.name}
-                  className="max-w-full h-auto max-h-[600px] object-contain"
-                />
+              <div className="flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-8 min-h-[500px]">
+                <div className="relative group">
+                  <img
+                    src={previewFile.fileData}
+                    alt={previewFile.name}
+                    className="max-w-full h-auto max-h-[700px] object-contain rounded-lg shadow-2xl"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+                </div>
               </div>
             )}
 
             {fileType === 'pdf' && (
-              <iframe
-                src={previewFile.fileData}
-                className="w-full h-[600px] border rounded"
-                title={previewFile.name}
-              />
+              <div className="bg-gray-800 p-4">
+                <iframe
+                  src={previewFile.fileData}
+                  className="w-full h-[700px] rounded-lg shadow-xl bg-white"
+                  title={previewFile.name}
+                />
+              </div>
             )}
 
             {fileType === 'video' && (
-              <video
-                src={previewFile.fileData}
-                controls
-                className="w-full max-h-[600px] bg-black rounded"
-              >
-                Your browser does not support the video tag.
-              </video>
+              <div className="bg-black p-6">
+                <video
+                  src={previewFile.fileData}
+                  controls
+                  className="w-full max-h-[700px] rounded-lg shadow-2xl"
+                  controlsList="nodownload"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             )}
 
             {fileType === 'audio' && (
-              <div className="flex items-center justify-center bg-gray-50 rounded p-8">
-                <audio src={previewFile.fileData} controls className="w-full max-w-md">
-                  Your browser does not support the audio tag.
-                </audio>
+              <div className="flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-12 min-h-[400px]">
+                <div className="w-full max-w-2xl">
+                  <div className="flex items-center justify-center mb-8">
+                    <div className="h-32 w-32 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
+                      <svg className="h-16 w-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-center text-lg font-semibold mb-4 text-gray-800 truncate">
+                      {previewFile.name}
+                    </h3>
+                    <audio
+                      src={previewFile.fileData}
+                      controls
+                      className="w-full"
+                      controlsList="nodownload"
+                    >
+                      Your browser does not support the audio tag.
+                    </audio>
+                  </div>
+                </div>
               </div>
             )}
 
             {(fileType === 'text' || fileType === 'code') && (
-              <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm overflow-auto">
-                <pre className="whitespace-pre-wrap">
-                  {/* Decode base64 text content */}
-                  {previewFile.fileData.startsWith('data:')
-                    ? atob(previewFile.fileData.split(',')[1])
-                    : 'Unable to preview file'}
-                </pre>
+              <div className="bg-gray-900 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+                  <div className="px-4 py-2 bg-gray-700 border-b border-gray-600 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex space-x-1.5">
+                        <div className="h-3 w-3 rounded-full bg-red-500" />
+                        <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                        <div className="h-3 w-3 rounded-full bg-green-500" />
+                      </div>
+                      <span className="text-sm text-gray-300 ml-4 font-mono">{previewFile.name}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 font-mono">{fileExtension}</span>
+                  </div>
+                  <div className="overflow-auto max-h-[600px]">
+                    <pre className="p-4 text-sm font-mono text-gray-100 leading-relaxed">
+                      {previewFile.fileData.startsWith('data:')
+                        ? atob(previewFile.fileData.split(',')[1])
+                        : 'Unable to preview file'}
+                    </pre>
+                  </div>
+                </div>
               </div>
             )}
 
             {fileType === 'unknown' && (
-              <div className="text-center py-12 text-gray-500">
-                <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p className="text-lg font-medium">Cannot preview this file type</p>
-                <p className="text-sm mt-1 mb-4">Download the file to view it</p>
-                <Button onClick={() => downloadFile(previewFile)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download File
-                </Button>
+              <div className="text-center py-20 px-6 bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="max-w-md mx-auto">
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <FileText className="h-12 w-12 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    Preview Not Available
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    This file type cannot be previewed in the browser. Download it to view the contents.
+                  </p>
+                  <Button
+                    onClick={() => downloadFile(previewFile)}
+                    className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+                    size="lg"
+                  >
+                    <Download className="h-5 w-5 mr-2" />
+                    Download File
+                  </Button>
+                </div>
               </div>
             )}
           </div>
