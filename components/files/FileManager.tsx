@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -15,6 +15,8 @@ import {
   Image as ImageIcon,
   FileCode,
   ArrowLeft,
+  Upload,
+  Download,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -33,6 +35,7 @@ interface FileNode {
   size?: number
   createdAt: Date
   children: FileNode[]
+  fileData?: string // base64 encoded file data for download
 }
 
 interface FileManagerProps {
@@ -69,6 +72,8 @@ export function FileManager({ projectId }: FileManagerProps) {
   const [currentPath, setCurrentPath] = useState<number[]>([])
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   // Get current folder based on path
@@ -178,6 +183,87 @@ export function FileManager({ projectId }: FileManagerProps) {
     setCurrentPath([])
   }
 
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+
+        // Read file as base64
+        const reader = new FileReader()
+        await new Promise((resolve, reject) => {
+          reader.onload = () => {
+            const newFile: FileNode = {
+              id: Date.now().toString() + i,
+              name: file.name,
+              type: 'file',
+              size: file.size,
+              createdAt: new Date(),
+              children: [],
+              fileData: reader.result as string,
+            }
+
+            const newFileSystem = [...fileSystem]
+            let current = newFileSystem
+            for (const index of currentPath) {
+              current = current[index].children
+            }
+            current.push(newFile)
+
+            setFileSystem(newFileSystem)
+            resolve(null)
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+      }
+
+      toast({
+        title: 'Files uploaded',
+        description: `${files.length} file(s) uploaded successfully.`,
+      })
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: 'Failed to upload files.',
+      })
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const downloadFile = (item: FileNode) => {
+    if (item.type === 'folder' || !item.fileData) return
+
+    const link = document.createElement('a')
+    link.href = item.fileData
+    link.download = item.name
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: 'Download started',
+      description: `Downloading "${item.name}"`,
+    })
+  }
+
   const getFileIcon = (file: FileNode) => {
     if (file.type === 'folder') return Folder
     const ext = file.name.split('.').pop()?.toLowerCase()
@@ -216,6 +302,22 @@ export function FileManager({ projectId }: FileManagerProps) {
         </div>
 
         <div className="flex items-center space-x-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {uploading ? 'Uploading...' : 'Upload Files'}
+          </Button>
           <Button
             size="sm"
             onClick={() => setIsCreatingFolder(true)}
@@ -293,7 +395,7 @@ export function FileManager({ projectId }: FileManagerProps) {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{item.name}</p>
                       <p className="text-xs text-gray-500">
-                        {item.type === 'folder' ? 'Folder' : 'File'} •{' '}
+                        {item.type === 'folder' ? 'Folder' : formatFileSize(item.size)} •{' '}
                         {formatDate(item.createdAt)}
                       </p>
                     </div>
@@ -309,10 +411,15 @@ export function FileManager({ projectId }: FileManagerProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {item.type === 'folder' && (
+                        {item.type === 'folder' ? (
                           <DropdownMenuItem onClick={() => openFolder(index)}>
                             <Folder className="h-4 w-4 mr-2" />
                             Open
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => downloadFile(item)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => renameItem(index)}>
