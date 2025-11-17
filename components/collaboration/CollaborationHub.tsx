@@ -194,94 +194,95 @@ export function CollaborationHub({ projectId }: { projectId: string }) {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {collaborators.map(collaborator => {
-            const RoleIcon = roleIcons[collaborator.role]
-            const isOwner = collaborator.role === 'owner'
+          <>
+            <div className="space-y-3">
+              {collaborators.map(collaborator => {
+                const RoleIcon = roleIcons[collaborator.role]
+                const isOwner = collaborator.role === 'owner'
 
-            return (
-              <div
-                key={collaborator.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white font-semibold">
-                    {collaborator.name.charAt(0).toUpperCase()}
-                  </Avatar>
+                return (
+                  <div
+                    key={collaborator.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white font-semibold">
+                        {collaborator.name.charAt(0).toUpperCase()}
+                      </Avatar>
 
-                  <div>
-                    <p className="font-medium flex items-center gap-2">
-                      {collaborator.name}
-                      {isOwner && <Crown className="h-4 w-4 text-yellow-600" />}
-                    </p>
-                    <p className="text-sm text-gray-600">{collaborator.email}</p>
-                    {collaborator.lastActive && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Last active: {collaborator.lastActive}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Badge className={statusColors[collaborator.status]}>
-                    {collaborator.status}
-                  </Badge>
-
-                  {!isOwner && (
-                    <select
-                      value={collaborator.role}
-                      onChange={(e) => updateRole(collaborator.id, e.target.value as any)}
-                      className="px-3 py-1.5 text-sm border rounded"
-                    >
-                      <option value="editor">Editor</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                  )}
-
-                  {!isOwner && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCollaborator(collaborator.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-          {/* Pending invitations */}
-          {collaborators.some(c => c.status === 'pending') && (
-            <div className="mt-6 pt-6 border-t">
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Pending Invitations
-              </h4>
-              <div className="space-y-2">
-                {collaborators
-                  .filter(c => c.status === 'pending')
-                  .map(collaborator => (
-                    <div
-                      key={collaborator.id}
-                      className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
-                    >
                       <div>
-                        <p className="font-medium text-sm">{collaborator.email}</p>
-                        <p className="text-xs text-gray-600">Invitation sent</p>
+                        <p className="font-medium flex items-center gap-2">
+                          {collaborator.name}
+                          {isOwner && <Crown className="h-4 w-4 text-yellow-600" />}
+                        </p>
+                        <p className="text-sm text-gray-600">{collaborator.email}</p>
+                        {collaborator.lastActive && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Last active: {collaborator.lastActive}
+                          </p>
+                        )}
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Resend
-                      </Button>
                     </div>
-                  ))}
-              </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge className={statusColors[collaborator.status]}>
+                        {collaborator.status}
+                      </Badge>
+
+                      {!isOwner && (
+                        <select
+                          value={collaborator.role}
+                          onChange={(e) => updateRole(collaborator.id, e.target.value as any)}
+                          className="px-3 py-1.5 text-sm border rounded"
+                        >
+                          <option value="editor">Editor</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                      )}
+
+                      {!isOwner && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCollaborator(collaborator.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          )}
-        </div>
+
+            {/* Pending invitations */}
+            {collaborators.some(c => c.status === 'pending') && (
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Pending Invitations
+                </h4>
+                <div className="space-y-2">
+                  {collaborators
+                    .filter(c => c.status === 'pending')
+                    .map(collaborator => (
+                      <div
+                        key={collaborator.id}
+                        className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{collaborator.email}</p>
+                          <p className="text-xs text-gray-600">Invitation sent</p>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          Resend
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
