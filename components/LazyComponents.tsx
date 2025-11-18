@@ -131,6 +131,28 @@ export const BatchFileProcessor = dynamic(
 )
 
 // ============================================================================
+// BATCH 3: COLLABORATION & EDGE COMPUTING (2 major features - 764 lines)
+// ============================================================================
+
+// Real-Time Collaboration Space - Solve async delays (32.6M remote workers)
+export const RealTimeCollaborationSpace = dynamic(
+  () => import('@/components/collaboration/RealTimeCollaborationSpace').then(mod => ({ default: mod.RealTimeCollaborationSpace })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// Edge-Optimized Computation Engine - $679B cloud + $274B edge market
+export const EdgeOptimizedEngine = dynamic(
+  () => import('@/components/computation/EdgeOptimizedEngine').then(mod => ({ default: mod.EdgeOptimizedEngine })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// ============================================================================
 // EXISTING FEATURES (Previously built - lazy load for optimization)
 // ============================================================================
 
