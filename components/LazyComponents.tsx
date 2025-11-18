@@ -15,7 +15,7 @@ const LoadingFallback = () => (
 )
 
 // ============================================================================
-// NEW RESEARCH-DRIVEN FEATURES (6 components - 1,880+ lines, ~120KB)
+// BATCH 1: FIRST 6 RESEARCH-DRIVEN FEATURES (2,413 lines)
 // ============================================================================
 
 // Smart Metadata Capture - Solves $28B reproducibility crisis
@@ -66,6 +66,64 @@ export const ExperimentChecklistGenerator = dynamic(
 // Data Audit Trail - GLP, 21 CFR Part 11, ISO 17025 compliance
 export const DataAuditTrail = dynamic(
   () => import('@/components/audit/DataAuditTrail').then(mod => ({ default: mod.DataAuditTrail })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// ============================================================================
+// BATCH 2: NEXT 6 AGGRESSIVE FEATURES (2,850+ lines)
+// ============================================================================
+
+// Progressive Visualization Engine - Defeats "curse of dimensionality"
+export const ProgressiveVisualizationEngine = dynamic(
+  () => import('@/components/visualization/ProgressiveVisualizationEngine').then(mod => ({ default: mod.ProgressiveVisualizationEngine })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// Instrument Integration Hub - $6.17B Lab 4.0 market
+export const InstrumentIntegrationHub = dynamic(
+  () => import('@/components/instruments/InstrumentIntegrationHub').then(mod => ({ default: mod.InstrumentIntegrationHub })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// Publication Format Assistant - Prevent journal rejection
+export const PublicationFormatAssistant = dynamic(
+  () => import('@/components/publication/PublicationFormatAssistant').then(mod => ({ default: mod.PublicationFormatAssistant })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// AI Research Copilot - Human-in-the-loop ML (Top 2025 trend)
+export const AIResearchCopilot = dynamic(
+  () => import('@/components/ai/AIResearchCopilot').then(mod => ({ default: mod.AIResearchCopilot })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// Dataset Quality Dashboard - Real-time quality monitoring
+export const DatasetQualityDashboard = dynamic(
+  () => import('@/components/dashboard/DatasetQualityDashboard').then(mod => ({ default: mod.DatasetQualityDashboard })),
+  {
+    loading: () => <LoadingFallback />,
+    ssr: false,
+  }
+)
+
+// Batch File Processor - Process thousands of files
+export const BatchFileProcessor = dynamic(
+  () => import('@/components/files/BatchFileProcessor').then(mod => ({ default: mod.BatchFileProcessor })),
   {
     loading: () => <LoadingFallback />,
     ssr: false,
