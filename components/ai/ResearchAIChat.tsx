@@ -14,6 +14,8 @@ import {
   Brain,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -28,10 +30,21 @@ interface ResearchAIChatProps {
     projectInfo?: string
   }
   fullScreen?: boolean
+  initialUserMessage?: string
+}
+
+// Placeholder for searchSimilarPapers - replace with actual implementation
+async function searchSimilarPapers(query: string): Promise<any[]> {
+  console.log(`Searching for similar papers for: ${query}`)
+  // Simulate API call
+  return new Promise(resolve => setTimeout(() => resolve([
+    { title: 'A Novel Approach to AI Research', year: 2023, abstract: 'This paper explores new methodologies in artificial intelligence research, focusing on large language models and their applications in scientific discovery.' },
+    { title: 'Understanding Data Patterns with Llama 3.1', year: 2024, abstract: 'An in-depth analysis of Llama 3.1 capabilities in identifying complex patterns within large datasets, offering insights into its performance.' },
+  ]), 1000))
 }
 
 // ChatGPT-like interface powered by Groq Llama 3.1 8B
-export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatProps) {
+export function ResearchAIChat({ context, fullScreen = false, initialUserMessage }: ResearchAIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -41,6 +54,7 @@ export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatPr
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [includeSearch, setIncludeSearch] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -48,33 +62,41 @@ export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatPr
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
-
-    const userMessage: Message = {
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
+  // Handle initial message
+  useEffect(() => {
+    if (initialUserMessage) {
+      handleSendMessage(initialUserMessage)
     }
+  }, [initialUserMessage])
 
+  const handleSendMessage = async (content: string) => {
+    const userMessage: Message = { role: 'user', content, timestamp: new Date() }
     setMessages(prev => [...prev, userMessage])
-    setInput('')
     setIsLoading(true)
 
     try {
+      let searchContext = ''
+      if (includeSearch) {
+        const papers = await searchSimilarPapers(content)
+        if (papers.length > 0) {
+          searchContext = `\n\nFound similar papers:\n${papers.map(p => `- ${p.title} (${p.year}): ${p.abstract.substring(0, 150)}...`).join('\n')}`
+        }
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })).concat([
-            { role: 'user', content: input }
-          ]),
-          context,
+          messages: messages.map(m => ({ role: m.role, content: m.content })).concat([userMessage]),
+          context: {
+            ...context,
+            projectInfo: (context?.projectInfo || '') + searchContext
+          },
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response')
+        throw new Error('Failed to send message')
       }
 
       const data = await response.json()
@@ -90,12 +112,19 @@ export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatPr
       console.error('Chat error:', error)
       toast({
         title: 'Error',
-        description: 'Failed to get AI response. Please try again.',
+        description: 'Failed to send message. Please try again.',
         variant: 'destructive',
       })
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.', timestamp: new Date() }])
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const sendMessage = () => {
+    if (!input.trim()) return
+    handleSendMessage(input)
+    setInput('')
   }
 
   const clearChat = () => {
@@ -163,11 +192,10 @@ export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatPr
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-4 ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
+                className={`max-w-[80%] rounded-lg p-4 ${msg.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-900'
+                  }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 <p className="text-xs mt-2 opacity-70">
@@ -190,21 +218,29 @@ export function ResearchAIChat({ context, fullScreen = false }: ResearchAIChatPr
         </div>
 
         {/* Input */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Ask about your data, plots, or get research suggestions..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-            disabled={isLoading}
-          />
-          <Button onClick={sendMessage} disabled={!input.trim() || isLoading}>
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
+        <div className="p-4 border-t bg-white">
+          <div className="flex items-center space-x-2 mb-2">
+            <Switch id="internet-search" checked={includeSearch} onCheckedChange={setIncludeSearch} />
+            <Label htmlFor="internet-search" className="text-xs text-gray-500">Search internet for papers</Label>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+              placeholder="Ask about your data, plots, or get research suggestions..."
+              className="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+            />
+            <Button onClick={sendMessage} disabled={!input.trim() || isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Quick prompts */}

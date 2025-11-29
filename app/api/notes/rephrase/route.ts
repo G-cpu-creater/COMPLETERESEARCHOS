@@ -13,7 +13,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Text is required' }, { status: 400 })
         }
 
-        const systemMessage = `You are an expert editor. Rephrase the following text without changing its meaning or context. Improve grammar, clarity, and human tone. Return ONLY the rephrased text, no explanations.`
+        const prompt = `You are a helpful writing assistant. Rephrase the following text to be more clear, concise, and professional. 
+    
+    IMPORTANT: The input contains HTML. You MUST preserve all HTML tags (especially <img> tags) exactly as they are. Only rephrase the text content between tags. Do not remove or modify any image tags.
+
+    Input:
+    ${text}`
 
         const response = await fetch(GROQ_API_URL, {
             method: 'POST',
@@ -24,8 +29,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 model: 'llama-3.1-8b-instant',
                 messages: [
-                    { role: 'system', content: systemMessage },
-                    { role: 'user', content: text }
+                    { role: 'user', content: prompt }
                 ],
                 temperature: 0.3,
                 max_tokens: 1024,

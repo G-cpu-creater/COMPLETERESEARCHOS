@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
                     {
                         id: 'init',
                         role: 'assistant',
-                        content: 'Hello! I am your AI Research Assistant. How can I help you today?',
+                        content: 'Hello! I\'m your AI research assistant. How can I assist you today?',
                         createdAt: new Date().toISOString()
                     }
                 ]

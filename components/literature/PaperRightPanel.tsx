@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sparkles, Search, BookOpen, FileText } from 'lucide-react'
 import { ResearchAIChat } from '@/components/ai/ResearchAIChat'
+import { Breadcrumbs } from './Breadcrumbs'
 
 interface PaperRightPanelProps {
     paper: any
@@ -15,11 +16,14 @@ interface PaperRightPanelProps {
 export function PaperRightPanel({ paper, onClose }: PaperRightPanelProps) {
     return (
         <div className="w-96 border-l bg-white flex flex-col h-full shadow-xl">
-            <div className="p-4 border-b flex items-center justify-between bg-gray-50">
-                <h2 className="font-semibold text-gray-900 truncate max-w-[200px]" title={paper.title}>
-                    {paper.title}
-                </h2>
-                <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
+            <div className="p-4 border-b bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold text-gray-900 truncate max-w-[200px]" title={paper.title}>
+                        {paper.title}
+                    </h2>
+                    <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
+                </div>
+                <Breadcrumbs paper={paper} />
             </div>
 
             <Tabs defaultValue="ai" className="flex-1 flex flex-col">

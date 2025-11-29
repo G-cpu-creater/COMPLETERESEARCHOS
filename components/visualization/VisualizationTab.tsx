@@ -12,7 +12,7 @@ import {
   Box,
 } from 'lucide-react'
 import { PlotVisualization } from './PlotVisualization'
-import { Spreadsheet } from './Spreadsheet'
+import { SpreadsheetEditor } from './SpreadsheetEditor'
 import { AIInsightsButton } from './AIInsightsButton'
 import { InsightsTab } from './InsightsTab'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -191,15 +191,22 @@ export function VisualizationTab() {
               <div className="h-full flex gap-4 overflow-hidden">
                 {/* Left Panel - Spreadsheet */}
                 <div className="w-1/2 overflow-hidden">
-                  <Spreadsheet
-                    data={data}
-                    headers={headers}
-                    selectedColumns={selectedColumns}
-                    onColumnSelect={handleColumnClick}
-                    selectedRows={selectedRows}
-                    onRowSelect={handleRowSelect}
-                    onSelectAllRows={handleSelectAllRows}
-                  />
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1 overflow-hidden bg-white rounded-lg border shadow-sm">
+                      <SpreadsheetEditor
+                        data={data}
+                        columns={headers}
+                        onSave={(newData) => setData(newData)}
+                        onSelectionChange={(startRow, endRow) => {
+                          const newSelected = new Set<number>()
+                          for (let i = startRow; i <= endRow; i++) {
+                            newSelected.add(i)
+                          }
+                          setSelectedRows(newSelected)
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right Panel - Plot Visualization */}

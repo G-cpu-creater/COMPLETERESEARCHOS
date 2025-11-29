@@ -12,8 +12,21 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-    const [sessionId, setSessionId] = useState<string | null>(null)
+    const [sessionId, setSessionId] = useState<string | null>(() => {
+        // Load from localStorage on mount
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('lastActiveSessionId')
+        }
+        return null
+    })
     const [sessionTitle, setSessionTitle] = useState<string | null>(null)
+
+    // Save to localStorage when sessionId changes
+    React.useEffect(() => {
+        if (sessionId) {
+            localStorage.setItem('lastActiveSessionId', sessionId)
+        }
+    }, [sessionId])
 
     return (
         <SessionContext.Provider value={{ sessionId, setSessionId, sessionTitle, setSessionTitle }}>

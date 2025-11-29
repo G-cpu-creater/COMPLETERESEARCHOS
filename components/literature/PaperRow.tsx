@@ -4,6 +4,8 @@ import React from 'react'
 import { FileText, MoreVertical, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
 interface PaperRowProps {
     paper: any
@@ -12,8 +14,21 @@ interface PaperRowProps {
 }
 
 export function PaperRow({ paper, onSelect, selected }: PaperRowProps) {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: paper.id,
+        data: { type: 'paper', paper }
+    })
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+    }
+
     return (
         <div
+            ref={setNodeRef}
+            style={style}
+            {...listeners}
+            {...attributes}
             className={`flex items-center gap-4 p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : ''}`}
             onClick={() => onSelect(paper)}
         >

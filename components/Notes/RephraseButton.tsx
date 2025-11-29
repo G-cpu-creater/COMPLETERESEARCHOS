@@ -19,8 +19,12 @@ export function RephraseButton({ blockId, content, onRephrase }: RephraseButtonP
 
         setIsLoading(true)
         try {
-            // Extract text from HTML (simple strip tags for now, backend should handle better)
-            const text = content.replace(/<[^>]*>?/gm, '')
+            // Extract text but preserve img tags
+            // This regex matches everything that is NOT an img tag and strips it, 
+            // but we actually want to keep text AND img tags.
+            // A better approach for the LLM is to send the full HTML but ask it to ONLY modify text content.
+            // For now, let's send the full HTML content to the API.
+            const text = content
 
             const response = await fetch(`/api/notes/rephrase`, {
                 method: 'POST',
