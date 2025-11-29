@@ -7,6 +7,12 @@
 
 **ResearchOS** is a modern, full-stack web platform for electrochemistry research data management, visualization, and collaboration. Built with Next.js 14, it provides researchers with powerful tools to organize experiments, analyze data, and share findings with colleagues.
 
+## 🚀 One-Click Deploy
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/researchos?referralCode=bonus)
+
+Click the button above to deploy your own instance in 2 minutes!
+
 🌐 **Live Demo**: [https://research-os.vercel.app](https://research-os.vercel.app)
 
 ---
