@@ -33,7 +33,26 @@ export async function POST(
     }
 
     // Parse the file
-    const parsedData = await parserRegistry.parseFile(file)
+    let parsedData
+    try {
+      parsedData = await parserRegistry.parseFile(file)
+      console.log('File parsed successfully:', {
+        filename: file.name,
+        technique: parsedData.technique,
+        rowCount: parsedData.data.rows.length,
+        columnCount: parsedData.data.columns.length
+      })
+    } catch (parseError: any) {
+      console.error('Parser error:', {
+        filename: file.name,
+        error: parseError.message,
+        stack: parseError.stack
+      })
+      return NextResponse.json(
+        { error: `Failed to parse file: ${parseError.message}` },
+        { status: 400 }
+      )
+    }
 
     // For now, save file to public/uploads (in production, use Vercel Blob or S3)
     const bytes = await file.arrayBuffer()
@@ -72,7 +91,11 @@ export async function POST(
       }
     }, { status: 201 })
   } catch (error: any) {
-    console.error('Upload error:', error)
+    console.error('Upload error:', {
+      message: error.message,
+      stack: error.stack,
+      error
+    })
 
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
