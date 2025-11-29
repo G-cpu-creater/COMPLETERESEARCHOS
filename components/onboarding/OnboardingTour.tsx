@@ -87,10 +87,6 @@ export function OnboardingTour() {
     setOpen(false)
   }
 
-  const handleSkip = () => {
-    localStorage.setItem('researchos_tour_completed', 'true')
-    setOpen(false)
-  }
 
   const step = tourSteps[currentStep]
 
@@ -118,13 +114,12 @@ export function OnboardingTour() {
             {tourSteps.map((_, idx) => (
               <div
                 key={idx}
-                className={`h-2 rounded-full transition-all ${
-                  idx === currentStep
+                className={`h-2 rounded-full transition-all ${idx === currentStep
                     ? 'w-8 bg-blue-600'
                     : idx < currentStep
-                    ? 'w-2 bg-blue-400'
-                    : 'w-2 bg-gray-300'
-                }`}
+                      ? 'w-2 bg-blue-400'
+                      : 'w-2 bg-gray-300'
+                  }`}
               />
             ))}
           </div>
