@@ -83,16 +83,20 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
         }
       }
 
+      const payload = {
+        messages: messages.map(m => ({ role: m.role, content: m.content })).concat([{ role: userMessage.role, content: userMessage.content }]),
+        context: {
+          ...context,
+          projectInfo: (context?.projectInfo || '') + searchContext
+        },
+      }
+
+      console.log('Sending to /api/chat:', JSON.stringify(payload, null, 2))
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })).concat([userMessage]),
-          context: {
-            ...context,
-            projectInfo: (context?.projectInfo || '') + searchContext
-          },
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
