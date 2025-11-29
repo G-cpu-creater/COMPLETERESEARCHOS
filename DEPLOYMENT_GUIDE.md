@@ -43,7 +43,34 @@ This token is required for file uploads (PDFs, images).
 2. Wait for the build to finish (approx. 2-3 minutes).
 3. Once live, your app is ready!
 
-## Step 5: How to Collaborate
+## Step 5: How to Run Locally (Test on your Laptop)
+To run the project on your own computer, you need to set up your local environment variables.
+
+1. **Pull the code:**
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/ElctrDc.git
+   cd ElctrDc
+   npm install
+   ```
+
+2. **Create a `.env` file:**
+   Create a file named `.env` in the root folder and paste the following (these are the same keys as above):
+
+   ```env
+   DATABASE_URL="postgresql://neondb_owner:npg_yLiTBVnK6b5Y@ep-weathered-bird-a41yx8y6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+   GROQ_API_KEY="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"
+   NEXTAUTH_SECRET="GgyEsV5aQ7C9fUUai88dixuUb9NafO/AD4mTaJWzEes="
+   NEXTAUTH_URL="http://localhost:3000"
+   BLOB_READ_WRITE_TOKEN="vercel_blob_rw_z5Pqwh55j92Yfljg_gSaywHbLjmcW0F1fG8qY1p4Y0YaGxK"
+   ```
+
+3. **Run the app:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Step 6: How to Collaborate
 - **To make changes:** Edit code on your laptop, push to your fork (`git push origin main`). Vercel will auto-deploy your site.
 - **To share changes:** Go to GitHub and open a **Pull Request** from your fork to the original repository.
 - **To get updates:** Click **"Sync Fork"** on your GitHub repo page to pull the latest changes from the original repo.
