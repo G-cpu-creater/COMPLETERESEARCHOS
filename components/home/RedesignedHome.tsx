@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,12 +10,11 @@ import {
   MessageSquare,
   Sparkles,
 } from 'lucide-react'
-import { ProjectTemplatesModal } from './ProjectTemplatesModal'
 import { ResearchAIChat } from '@/components/ai/ResearchAIChat'
 
 // Redesigned Home Page - Only 3 main actions
 export function RedesignedHome() {
-  const [showTemplates, setShowTemplates] = useState(false)
+  const router = useRouter()
   const [showAIChat, setShowAIChat] = useState(false)
 
   return (
@@ -31,7 +31,7 @@ export function RedesignedHome() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
         {/* Create New Project */}
         <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-          <CardContent className="p-8 text-center" onClick={() => setShowTemplates(true)}>
+          <CardContent className="p-8 text-center" onClick={() => router.push('/dashboard/projects/new')}>
             <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
               <Plus className="h-10 w-10 text-blue-600" />
             </div>
@@ -44,7 +44,7 @@ export function RedesignedHome() {
 
         {/* All Projects */}
         <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-          <CardContent className="p-8 text-center" onClick={() => window.location.href = '/projects'}>
+          <CardContent className="p-8 text-center" onClick={() => router.push('/dashboard/projects')}>
             <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
               <FolderOpen className="h-10 w-10 text-green-600" />
             </div>
@@ -69,12 +69,6 @@ export function RedesignedHome() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Modals */}
-      <ProjectTemplatesModal
-        open={showTemplates}
-        onClose={() => setShowTemplates(false)}
-      />
 
       {/* AI Chat Modal */}
       {showAIChat && (

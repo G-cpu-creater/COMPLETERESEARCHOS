@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import {
   Upload,
   Loader2,
@@ -13,6 +12,10 @@ import {
   Box,
 } from 'lucide-react'
 import { PlotVisualization } from './PlotVisualization'
+import { Spreadsheet } from './Spreadsheet'
+import { AIInsightsButton } from './AIInsightsButton'
+import { InsightsTab } from './InsightsTab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Papa from 'papaparse'
 
 type PlotType = 'line' | 'scatter' | 'bar' | 'histogram' | 'box'
@@ -21,8 +24,10 @@ export function VisualizationTab() {
   const [data, setData] = useState<string[][]>([])
   const [headers, setHeaders] = useState<string[]>([])
   const [selectedColumns, setSelectedColumns] = useState<Set<number>>(new Set())
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [plotType, setPlotType] = useState<PlotType>('line')
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('viz')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +69,25 @@ export function VisualizationTab() {
     setSelectedColumns(newSelected)
   }
 
+  const handleRowSelect = (index: number) => {
+    const newSelected = new Set(selectedRows)
+    if (newSelected.has(index)) {
+      newSelected.delete(index)
+    } else {
+      newSelected.add(index)
+    }
+    setSelectedRows(newSelected)
+  }
+
+  const handleSelectAllRows = (selected: boolean) => {
+    if (selected) {
+      const allIndices = new Set(data.map((_, i) => i))
+      setSelectedRows(allIndices)
+    } else {
+      setSelectedRows(new Set())
+    }
+  }
+
   const plotTypes: { type: PlotType; icon: any; label: string }[] = [
     { type: 'line', icon: LineChart, label: 'Line' },
     { type: 'scatter', icon: ScatterChart, label: 'Scatter' },
@@ -72,148 +96,130 @@ export function VisualizationTab() {
     { type: 'box', icon: Box, label: 'Box' },
   ]
 
+  // Prepare summaries for AI
+  const dataSummary = `Dataset with ${data.length} rows and ${headers.length} columns. Headers: ${headers.join(', ')}.`
+  const plotSummary = `Plotting ${selectedColumns.size} columns as ${plotType} chart.`
+
   return (
     <div className="h-full flex flex-col">
-      {/* Toolbar */}
-      <div className="p-4 border-b flex items-center justify-between bg-white">
-        <div className="flex items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            size="sm"
-          >
-            {loading ? (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        {/* Toolbar */}
+        <div className="p-4 border-b flex items-center justify-between bg-white">
+          <div className="flex items-center gap-4">
+            <TabsList>
+              <TabsTrigger value="viz">Visualization</TabsTrigger>
+              <TabsTrigger value="insights" disabled={data.length === 0}>Insights</TabsTrigger>
+            </TabsList>
+
+            <div className="h-6 w-px bg-gray-200" />
+
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+                size="sm"
+                variant="outline"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Load Dataset
+                  </>
+                )}
+              </Button>
+
+              {data.length > 0 && (
+                <span className="text-sm text-gray-600">
+                  {data.length} rows × {headers.length} cols
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {activeTab === 'viz' && data.length > 0 && (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Load Dataset
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-md">
+                  {plotTypes.map(({ type, icon: Icon, label }) => (
+                    <Button
+                      key={type}
+                      variant={plotType === type ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => setPlotType(type)}
+                      title={label}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  ))}
+                </div>
+                <div className="h-6 w-px bg-gray-200 mx-2" />
               </>
             )}
-          </Button>
 
-          {data.length > 0 && (
-            <span className="text-sm text-gray-600">
-              {data.length} rows × {headers.length} columns
-            </span>
-          )}
-        </div>
-
-        {/* Plot Type Selector */}
-        {data.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium mr-2">Plot Type:</span>
-            {plotTypes.map(({ type, icon: Icon, label }) => (
-              <Button
-                key={type}
-                variant={plotType === type ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setPlotType(type)}
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {label}
-              </Button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Split View */}
-      {data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <Upload className="h-16 w-16 mx-auto mb-4 opacity-30" />
-            <h3 className="text-xl font-semibold mb-2">Load a Dataset</h3>
-            <p className="text-sm">Upload a CSV file to start visualizing</p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel - Spreadsheet */}
-          <div className="w-1/2 border-r overflow-auto p-4">
-            <Card className="overflow-hidden">
-              <div className="border rounded-lg overflow-auto max-h-[calc(100vh-12rem)]">
-                <table className="w-full border-collapse">
-                  <thead className="bg-gray-100 sticky top-0">
-                    <tr>
-                      <th className="border p-2 text-xs font-semibold text-gray-600 bg-gray-200">
-                        #
-                      </th>
-                      {headers.map((header, index) => (
-                        <th
-                          key={index}
-                          onClick={() => handleColumnClick(index)}
-                          className={`border p-2 text-sm font-semibold cursor-pointer transition-colors ${
-                            selectedColumns.has(index)
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                          }`}
-                        >
-                          {header || `Column ${index + 1}`}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.slice(0, 100).map((row, rowIndex) => (
-                      <tr key={rowIndex} className="hover:bg-gray-50">
-                        <td className="border p-2 text-xs text-gray-500 bg-gray-50 font-mono">
-                          {rowIndex + 1}
-                        </td>
-                        {row.map((cell, cellIndex) => (
-                          <td
-                            key={cellIndex}
-                            className={`border p-2 text-sm ${
-                              selectedColumns.has(cellIndex)
-                                ? 'bg-blue-50'
-                                : ''
-                            }`}
-                          >
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {data.length > 100 && (
-                  <div className="p-4 text-center text-sm text-gray-600 bg-gray-50 border-t">
-                    Showing first 100 rows of {data.length}
-                  </div>
-                )}
-              </div>
-
-              {selectedColumns.size > 0 && (
-                <div className="p-3 bg-blue-50 border-t">
-                  <p className="text-sm text-blue-900">
-                    {selectedColumns.size} column{selectedColumns.size !== 1 ? 's' : ''} selected
-                  </p>
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Right Panel - Plot Visualization */}
-          <div className="w-1/2 overflow-auto p-4">
-            <PlotVisualization
-              data={data}
-              headers={headers}
-              selectedColumns={Array.from(selectedColumns)}
-              plotType={plotType}
+            <AIInsightsButton
+              onClick={() => setActiveTab('insights')}
+              disabled={data.length === 0}
             />
           </div>
         </div>
-      )}
+
+        {/* Content */}
+        <div className="flex-1 overflow-hidden bg-gray-50 p-4">
+          <TabsContent value="viz" className="h-full m-0">
+            {data.length === 0 ? (
+              <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                <div className="text-center text-gray-500">
+                  <Upload className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                  <h3 className="text-xl font-semibold mb-2">Load a Dataset</h3>
+                  <p className="text-sm">Upload a CSV file to start visualizing</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex gap-4 overflow-hidden">
+                {/* Left Panel - Spreadsheet */}
+                <div className="w-1/2 overflow-hidden">
+                  <Spreadsheet
+                    data={data}
+                    headers={headers}
+                    selectedColumns={selectedColumns}
+                    onColumnSelect={handleColumnClick}
+                    selectedRows={selectedRows}
+                    onRowSelect={handleRowSelect}
+                    onSelectAllRows={handleSelectAllRows}
+                  />
+                </div>
+
+                {/* Right Panel - Plot Visualization */}
+                <div className="w-1/2 overflow-hidden bg-white rounded-lg border shadow-sm p-4">
+                  <PlotVisualization
+                    data={data}
+                    headers={headers}
+                    selectedColumns={Array.from(selectedColumns)}
+                    plotType={plotType}
+                  />
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="insights" className="h-full m-0">
+            <InsightsTab dataSummary={dataSummary} plotSummary={plotSummary} />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }
