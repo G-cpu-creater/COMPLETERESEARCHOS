@@ -31,7 +31,7 @@ export function RedesignedHome() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
         {/* Create New Project */}
         <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-          <CardContent className="p-8 text-center" onClick={() => router.push('/dashboard/projects/new')}>
+          <CardContent className="p-8 text-center" onClick={() => router.push('/projects/new')}>
             <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
               <Plus className="h-10 w-10 text-blue-600" />
             </div>
@@ -44,7 +44,7 @@ export function RedesignedHome() {
 
         {/* All Projects */}
         <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-          <CardContent className="p-8 text-center" onClick={() => router.push('/dashboard/projects')}>
+          <CardContent className="p-8 text-center" onClick={() => router.push('/projects')}>
             <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
               <FolderOpen className="h-10 w-10 text-green-600" />
             </div>

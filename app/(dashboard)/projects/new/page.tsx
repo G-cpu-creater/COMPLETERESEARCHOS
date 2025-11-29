@@ -59,7 +59,7 @@ export default function NewProjectPage() {
         description: `${title} has been successfully created.`,
       })
 
-      router.push(`/dashboard/projects/${data.project.id}`)
+      router.push(`/projects/${data.project.id}`)
     } catch (err: any) {
       setError(err.message)
       toast({

@@ -26,6 +26,11 @@ export async function GET(
       include: {
         pages: {
           orderBy: { position: 'asc' },
+          include: {
+            blocks: {
+              orderBy: { position: 'asc' },
+            },
+          },
         },
         datasets: {
           orderBy: { uploadedAt: 'desc' },

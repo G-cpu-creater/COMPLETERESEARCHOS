@@ -98,9 +98,9 @@ export default function DashboardLayout({
             </Button>
           </Link>
 
-          <Link href="/dashboard/projects">
+          <Link href="/projects">
             <Button
-              variant={pathname?.startsWith('/dashboard/projects') ? 'secondary' : 'ghost'}
+              variant={pathname?.startsWith('/projects') ? 'secondary' : 'ghost'}
               className="w-full justify-start"
             >
               <FolderOpen className="h-4 w-4 mr-2" />
@@ -119,7 +119,7 @@ export default function DashboardLayout({
           </Link>
 
           <div className="pt-4">
-            <Link href="/dashboard/projects/new">
+            <Link href="/projects/new">
               <Button className="w-full justify-start">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 New Project

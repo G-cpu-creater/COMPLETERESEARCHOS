@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  NotionStyleEditor,
   DataManagementTab,
   VisualizationTab,
   AIInsightsTab,
@@ -16,7 +15,7 @@ import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { LiteratureManager } from '@/components/literature/LiteratureManager'
 import { ExportPanel } from '@/components/export/ExportPanel'
 import { Users, BookOpen, FileText, Download, ArrowRight, Sparkles } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { NotesContainer, type NoteBlock } from '@/components/Notes/NotesContainer'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -68,6 +67,17 @@ export default function ProjectDetailPage() {
       </div>
     )
   }
+
+  // Find Overview Page (first page or specific title)
+  const overviewPage = project.pages?.[0]
+
+  // Transform DB blocks to NoteBlocks
+  const initialBlocks: NoteBlock[] = overviewPage?.blocks?.map((b: any) => ({
+    id: b.id,
+    order: b.position,
+    header: b.content?.header || 'Untitled Section',
+    content: b.content?.html || '<p></p>'
+  })) || []
 
   // Research Tools - Keep only: Team Collaboration, Export & Publish, Lab Notebook, Literature
   const researchTools = [
@@ -143,20 +153,31 @@ export default function ProjectDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab - Notion-Style Editor */}
+        {/* Overview Tab - Notes Container */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Notion-Style Text Editor */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Experiment Documentation</CardTitle>
-              <CardDescription>
-                Document your research using the Notion-style editor below
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <NotionStyleEditor />
-            </CardContent>
-          </Card>
+          {/* Notes Container (Jupyter-style blocks) */}
+          {overviewPage ? (
+            <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+              <div className="p-4 border-b bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-800">Research Notes</h2>
+                <p className="text-sm text-gray-500">
+                  Document your findings using the block-based editor below.
+                </p>
+              </div>
+              <div className="h-[800px]">
+                <NotesContainer
+                  noteId={overviewPage.id}
+                  initialBlocks={initialBlocks}
+                />
+              </div>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-gray-500">
+                No overview page found for this project.
+              </CardContent>
+            </Card>
+          )}
 
           {/* Research Tools - Keep only 4 tools */}
           <div>
@@ -249,3 +270,4 @@ export default function ProjectDetailPage() {
     </div>
   )
 }
+

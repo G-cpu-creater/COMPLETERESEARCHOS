@@ -2,19 +2,42 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { PlusCircle, Search, FileText, Database, Trash2 } from 'lucide-react'
+import { PlusCircle, Search, FileText, Database, MoreVertical, Pencil, Trash2, Edit2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 export default function ProjectsPage() {
+  const router = useRouter()
   const [projects, setProjects] = useState<any[]>([])
   const [filteredProjects, setFilteredProjects] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  // Rename state
+  const [renamingProject, setRenamingProject] = useState<any>(null)
+  const [newTitle, setNewTitle] = useState('')
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
 
   useEffect(() => {
     fetchProjects()
@@ -65,6 +88,44 @@ export default function ProjectsPage() {
     }
   }
 
+  const openRenameDialog = (project: any) => {
+    setRenamingProject(project)
+    setNewTitle(project.title)
+    setIsRenameDialogOpen(true)
+  }
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!renamingProject) return
+
+    setIsRenaming(true)
+    try {
+      const res = await fetch(`/api/projects/${renamingProject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      })
+
+      if (!res.ok) throw new Error('Failed to rename project')
+
+      toast({
+        title: 'Project renamed',
+        description: 'The project title has been updated.',
+      })
+
+      fetchProjects()
+      setIsRenameDialogOpen(false)
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to rename project',
+        description: error.message,
+      })
+    } finally {
+      setIsRenaming(false)
+    }
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -75,7 +136,7 @@ export default function ProjectsPage() {
             Manage your research projects
           </p>
         </div>
-        <Link href="/dashboard/projects/new">
+        <Link href="/projects/new">
           <Button>
             <PlusCircle className="h-4 w-4 mr-2" />
             New Project
@@ -114,7 +175,7 @@ export default function ProjectsPage() {
                 : 'Get started by creating your first research project'}
             </p>
             {!searchQuery && (
-              <Link href="/dashboard/projects/new">
+              <Link href="/projects/new">
                 <Button>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Create Project
@@ -127,9 +188,11 @@ export default function ProjectsPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
             <Card key={project.id} className="hover:shadow-lg transition-shadow group relative">
-              <Link href={`/dashboard/projects/${project.id}`}>
+              <Link href={`/projects/${project.id}`} className="block h-full">
                 <CardHeader>
-                  <CardTitle className="line-clamp-1">{project.title}</CardTitle>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="line-clamp-1 pr-8">{project.title}</CardTitle>
+                  </div>
                   <CardDescription className="line-clamp-2">
                     {project.description || 'No description'}
                   </CardDescription>
@@ -157,21 +220,71 @@ export default function ProjectsPage() {
                   </p>
                 </CardContent>
               </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={(e) => {
-                  e.preventDefault()
-                  deleteProject(project.id)
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+
+              {/* Actions Menu */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Open
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openRenameDialog(project)}>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onClick={() => deleteProject(project.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Rename Dialog */}
+      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Project</DialogTitle>
+            <DialogDescription>
+              Enter a new name for your project.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRename}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Project Name</Label>
+                <Input
+                  id="name"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Enter project name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isRenaming}>
+                {isRenaming ? 'Renaming...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
