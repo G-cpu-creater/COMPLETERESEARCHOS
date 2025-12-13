@@ -34,9 +34,13 @@ export default function LoginPage() {
         throw new Error(data.error || 'Login failed')
       }
 
+      // Successful login
       router.push('/dashboard')
+      router.refresh() // Refresh to update auth state
     } catch (err: any) {
-      setError(err.message)
+      console.error('Login error:', err)
+      // Show user-friendly error message
+      setError(err.message || 'Failed to login. Please try again.')
     } finally {
       setLoading(false)
     }

@@ -1,5 +1,3 @@
-// This is your Prisma schema file
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,47 +8,45 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String           @id @default(uuid())
+  email         String           @unique
   name          String?
-  passwordHash  String    @map("password_hash")
-  avatarUrl     String?   @map("avatar_url")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  projects      Project[]
+  passwordHash  String           @map("password_hash")
+  avatarUrl     String?          @map("avatar_url")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
   conversations AIConversation[]
+  projects      Project[]
 
   @@map("users")
 }
 
 model Project {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  title         String
-  description   String?
-  status        String   @default("active") // active, archived, deleted
-  researchType  String?  @map("research_type") // battery, fuel_cell, corrosion, etc.
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  lastAccessed  DateTime @default(now()) @map("last_accessed")
-  settings      Json     @default("{}")
-
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pages         Page[]
-  datasets      Dataset[]
-  papers        Paper[]
-  workflows     Workflow[]
-  visualizations Visualization[]
-  milestones    Milestone[]
+  id                 String             @id @default(uuid())
+  userId             String             @map("user_id")
+  title              String
+  description        String?
+  status             String             @default("active")
+  researchType       String?            @map("research_type")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  lastAccessed       DateTime           @default(now()) @map("last_accessed")
+  settings           Json               @default("{}")
+  collaborators      Collaborator[]
+  comments           Comment[]
+  dataVersions       DataVersion[]
+  datasets           Dataset[]
+  exportRecords      ExportRecord[]
+  folders            Folder[]
   labNotebookEntries LabNotebookEntry[]
-  collaborators Collaborator[]
-  comments      Comment[]
-  dataVersions  DataVersion[]
-  mlModels      MLModel[]
-  predictions   Prediction[]
-  exportRecords ExportRecord[]
-  folders       Folder[]
+  milestones         Milestone[]
+  mlModels           MLModel[]
+  pages              Page[]
+  papers             Paper[]
+  predictions        Prediction[]
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visualizations     Visualization[]
+  workflows          Workflow[]
 
   @@index([userId])
   @@index([status])
@@ -58,22 +54,21 @@ model Project {
 }
 
 model Page {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  parentPageId  String?  @map("parent_page_id")
+  id            String           @id @default(uuid())
+  projectId     String           @map("project_id")
+  parentPageId  String?          @map("parent_page_id")
   title         String
   icon          String?
-  coverImage    String?  @map("cover_image")
+  coverImage    String?          @map("cover_image")
   position      Int
-  properties    Json     @default("{}")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parentPage    Page?    @relation("PageToPage", fields: [parentPageId], references: [id], onDelete: Cascade)
-  childPages    Page[]   @relation("PageToPage")
-  blocks        Block[]
+  properties    Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
   conversations AIConversation[]
+  blocks        Block[]
+  parentPage    Page?            @relation("PageToPage", fields: [parentPageId], references: [id], onDelete: Cascade)
+  childPages    Page[]           @relation("PageToPage")
+  project       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([parentPageId])
@@ -84,12 +79,11 @@ model Block {
   id            String   @id @default(uuid())
   pageId        String   @map("page_id")
   parentBlockId String?  @map("parent_block_id")
-  type          String   // text, heading, code, table, dataset, paper, etc.
+  type          String
   position      Int
   content       Json
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
-
   page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   parentBlock   Block?   @relation("BlockToBlock", fields: [parentBlockId], references: [id], onDelete: Cascade)
   childBlocks   Block[]  @relation("BlockToBlock")
@@ -100,24 +94,23 @@ model Block {
 }
 
 model Dataset {
-  id              String   @id @default(uuid())
-  projectId       String   @map("project_id")
-  name            String
-  technique       String   // CV, EIS, CA, CP, battery_cycling, etc.
-  instrument      String?  // BioLogic, Gamry, Neware, etc.
-  fileFormat      String?  @map("file_format") // mpt, dta, csv, etc.
-  originalFilename String? @map("original_filename")
-  fileUrl         String   @map("file_url")
-  parsedData      Json?    @map("parsed_data")
-  metadata        Json?
-  rowCount        Int?     @map("row_count")
-  columnCount     Int?     @map("column_count")
-  fileSize        BigInt?  @map("file_size")
-  uploadedAt      DateTime @default(now()) @map("uploaded_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  visualizations  Visualization[]
+  id               String          @id @default(uuid())
+  projectId        String          @map("project_id")
+  name             String
+  technique        String
+  instrument       String?
+  fileFormat       String?         @map("file_format")
+  originalFilename String?         @map("original_filename")
+  fileUrl          String          @map("file_url")
+  parsedData       Json?           @map("parsed_data")
+  metadata         Json?
+  rowCount         Int?            @map("row_count")
+  columnCount      Int?            @map("column_count")
+  fileSize         BigInt?         @map("file_size")
+  uploadedAt       DateTime        @default(now()) @map("uploaded_at")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  project          Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  visualizations   Visualization[]
 
   @@index([projectId])
   @@index([technique])
@@ -125,19 +118,18 @@ model Dataset {
 }
 
 model Visualization {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  datasetId     String?  @map("dataset_id")
+  id            String           @id @default(uuid())
+  projectId     String           @map("project_id")
+  datasetId     String?          @map("dataset_id")
   name          String
-  plotType      String   @map("plot_type") // cv_plot, nyquist, bode, etc.
-  config        Json     // Plotly.js configuration
-  thumbnailUrl  String?  @map("thumbnail_url")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  dataset       Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  plotType      String           @map("plot_type")
+  config        Json
+  thumbnailUrl  String?          @map("thumbnail_url")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
   conversations AIConversation[]
+  dataset       Dataset?         @relation(fields: [datasetId], references: [id])
+  project       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([datasetId])
@@ -153,16 +145,15 @@ model Paper {
   journal       String?
   year          Int?
   doi           String?
-  abstract      String?  @db.Text
+  abstract      String?
   fileUrl       String?  @map("file_url")
-  extractedText String?  @map("extracted_text") @db.Text
-  notes         String?  @db.Text
+  extractedText String?  @map("extracted_text")
+  notes         String?
   metadata      Json?
   uploadedAt    DateTime @default(now()) @map("uploaded_at")
   createdAt     DateTime @default(now()) @map("created_at")
-
+  folder        Folder?  @relation(fields: [folderId], references: [id])
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  folder        Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([folderId])
@@ -171,18 +162,17 @@ model Paper {
 }
 
 model Folder {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  parentId      String?  @map("parent_id")
-  name          String
-  path          String   @default("/")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent        Folder?  @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Restrict)
-  children      Folder[] @relation("FolderToFolder")
-  papers        Paper[]
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  parentId  String?  @map("parent_id")
+  name      String
+  path      String   @default("/")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  parent    Folder?  @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Restrict)
+  children  Folder[] @relation("FolderToFolder")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  papers    Paper[]
 
   @@index([projectId])
   @@index([parentId])
@@ -190,17 +180,16 @@ model Folder {
 }
 
 model Workflow {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  name          String
-  workflowType  String   @map("workflow_type") // battery_cycling, cv_analysis, etc.
-  steps         Json
-  status        String   @default("draft") // draft, active, completed
-  results       Json?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  name         String
+  workflowType String   @map("workflow_type")
+  steps        Json
+  status       String   @default("draft")
+  results      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([workflowType])
@@ -208,19 +197,18 @@ model Workflow {
 }
 
 model AIConversation {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  projectId       String?  @map("project_id")
-  pageId          String?  @map("page_id")
-  visualizationId String?  @map("visualization_id")
-  contextType     String   @map("context_type") // page, visualization, general
+  id              String         @id @default(uuid())
+  userId          String         @map("user_id")
+  projectId       String?        @map("project_id")
+  pageId          String?        @map("page_id")
+  visualizationId String?        @map("visualization_id")
+  contextType     String         @map("context_type")
   messages        Json
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  page            Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
-  visualization   Visualization? @relation(fields: [visualizationId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  page            Page?          @relation(fields: [pageId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visualization   Visualization? @relation(fields: [visualizationId], references: [id])
 
   @@index([userId])
   @@index([projectId])
@@ -228,54 +216,51 @@ model AIConversation {
 }
 
 model Milestone {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  title         String
-  description   String?  @db.Text
-  dueDate       DateTime @map("due_date")
-  completed     Boolean  @default(false)
-  completedAt   DateTime? @map("completed_at")
-  progress      Int      @default(0) // 0-100
-  position      Int
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  title       String
+  description String?
+  dueDate     DateTime  @map("due_date")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  progress    Int       @default(0)
+  position    Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("milestones")
 }
 
 model LabNotebookEntry {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  title         String
-  content       String   @db.Text
-  tags          String[]
-  locked        Boolean  @default(false)
-  author        String
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  title     String
+  content   String
+  tags      String[]
+  locked    Boolean  @default(false)
+  author    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("lab_notebook_entries")
 }
 
 model Collaborator {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  userId        String?  @map("user_id") // null if invited but not registered
-  email         String
-  name          String
-  role          String   @default("viewer") // owner, editor, viewer
-  status        String   @default("pending") // pending, active, inactive
-  invitedAt     DateTime @default(now()) @map("invited_at")
-  joinedAt      DateTime? @map("joined_at")
-  lastActive    DateTime? @map("last_active")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  projectId  String    @map("project_id")
+  userId     String?   @map("user_id")
+  email      String
+  name       String
+  role       String    @default("viewer")
+  status     String    @default("pending")
+  invitedAt  DateTime  @default(now()) @map("invited_at")
+  joinedAt   DateTime? @map("joined_at")
+  lastActive DateTime? @map("last_active")
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([email])
@@ -283,28 +268,27 @@ model Collaborator {
 }
 
 model Comment {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  userId        String   @map("user_id")
-  userName      String   @map("user_name")
-  content       String   @db.Text
-  resolved      Boolean  @default(false)
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  userName  String   @map("user_name")
+  content   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("comments")
 }
 
 model Notification {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  type          String   // success, warning, info, collaboration
-  title         String
-  message       String   @db.Text
-  read          Boolean  @default(false)
-  createdAt     DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([read])
@@ -312,58 +296,55 @@ model Notification {
 }
 
 model DataVersion {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  version       String
-  message       String   @db.Text
-  author        String
-  tag           String?
-  changes       Json     // { added, modified, deleted }
-  datasets      String[] // List of dataset IDs
-  snapshot      Json?    // Full state snapshot
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  version   String
+  message   String
+  author    String
+  tag       String?
+  changes   Json
+  datasets  String[]
+  snapshot  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("data_versions")
 }
 
 model MLModel {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  name          String
-  modelType     String   @map("model_type") // random_forest, neural_network, etc.
-  targetVariable String  @map("target_variable") // peak_current, resistance, etc.
-  accuracy      Float
-  trainedOn     DateTime @map("trained_on")
-  sampleCount   Int      @map("sample_count")
-  parameters    Json?    // Model hyperparameters
-  metrics       Json?    // Training metrics
-  status        String   @default("ready") // training, ready, deprecated
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  predictions   Prediction[]
+  id             String       @id @default(uuid())
+  projectId      String       @map("project_id")
+  name           String
+  modelType      String       @map("model_type")
+  targetVariable String       @map("target_variable")
+  accuracy       Float
+  trainedOn      DateTime     @map("trained_on")
+  sampleCount    Int          @map("sample_count")
+  parameters     Json?
+  metrics        Json?
+  status         String       @default("ready")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  predictions    Prediction[]
 
   @@index([projectId])
   @@map("ml_models")
 }
 
 model Prediction {
-  id            String   @id @default(uuid())
-  modelId       String   @map("model_id")
-  projectId     String   @map("project_id")
-  parameter     String   // peak_current, resistance, etc.
-  predicted     Float
-  confidence    Float
-  rangeMin      Float    @map("range_min")
-  rangeMax      Float    @map("range_max")
-  unit          String
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  model         MLModel  @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  modelId    String   @map("model_id")
+  projectId  String   @map("project_id")
+  parameter  String
+  predicted  Float
+  confidence Float
+  rangeMin   Float    @map("range_min")
+  rangeMax   Float    @map("range_max")
+  unit       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  model      MLModel  @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([modelId])
@@ -371,16 +352,15 @@ model Prediction {
 }
 
 model ExportRecord {
-  id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  format        String   // pdf, png, svg, csv, json
-  fileName      String   @map("file_name")
-  fileUrl       String?  @map("file_url")
-  options       Json?    // Export options (include data, plots, etc.)
-  status        String   @default("completed") // pending, completed, failed
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  format    String
+  fileName  String   @map("file_name")
+  fileUrl   String?  @map("file_url")
+  options   Json?
+  status    String   @default("completed")
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("export_records")
