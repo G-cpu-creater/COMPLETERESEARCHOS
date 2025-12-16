@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Block } from './Block'
+import { NotesProvider } from './NotesContext'
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
@@ -128,6 +129,31 @@ export function NotesContainer({ noteId }: NotesContainerProps) {
     ))
   }
 
+  const addBlockAfter = (blockId: string) => {
+    const index = blocks.findIndex(b => b.id === blockId)
+    const newBlock: NoteBlock = {
+      id: uuidv4(),
+      header: 'New block header name',
+      content: '',
+      order: index + 1.5 // Will be renormalized
+    }
+
+    // Insert after current block
+    const newBlocks = [...blocks]
+    newBlocks.splice(index + 1, 0, newBlock)
+    // Renumber all blocks
+    newBlocks.forEach((b, idx) => b.order = idx + 1)
+    setBlocks(newBlocks)
+
+    // Focus new block after a short delay
+    setTimeout(() => {
+      const newBlockElement = document.querySelector(`[data-block-id="${newBlock.id}"] .ProseMirror`)
+      if (newBlockElement instanceof HTMLElement) {
+        newBlockElement.focus()
+      }
+    }, 100)
+  }
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -140,59 +166,62 @@ export function NotesContainer({ noteId }: NotesContainerProps) {
   }
 
   return (
-    <div className="h-full overflow-auto p-6 bg-gray-50">
-      {/* Save indicator */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm">
-          {isSaving ? (
-            <span className="flex items-center text-blue-600">
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-              Saving...
-            </span>
-          ) : (
-            <span className="text-gray-500">All changes saved</span>
-          )}
+    <NotesProvider>
+      <div className="h-full overflow-auto p-6 bg-gray-50">
+        {/* Save indicator */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-sm">
+            {isSaving ? (
+              <span className="flex items-center text-blue-600">
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                Saving...
+              </span>
+            ) : (
+              <span className="text-gray-500">All changes saved</span>
+            )}
+          </div>
+          
+          <Button 
+            onClick={addBlock}
+            size="sm"
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Block
+          </Button>
         </div>
-        
-        <Button 
-          onClick={addBlock}
-          size="sm"
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Block
-        </Button>
-      </div>
 
-      {/* Blocks */}
-      <div className="space-y-4">
-        {blocks.map((block, index) => (
-          <Block
-            key={block.id}
-            block={block}
-            canMoveUp={index > 0}
-            canMoveDown={index < blocks.length - 1}
-            canDelete={blocks.length > 1}
-            onUpdate={(changes: Partial<NoteBlock>) => updateBlock(block.id, changes)}
-            onDelete={() => deleteBlock(block.id)}
-            onMoveUp={() => moveBlock(block.id, 'up')}
-            onMoveDown={() => moveBlock(block.id, 'down')}
-          />
-        ))}
-      </div>
+        {/* Blocks */}
+        <div className="space-y-4">
+          {blocks.map((block, index) => (
+            <Block
+              key={block.id}
+              block={block}
+              canMoveUp={index > 0}
+              canMoveDown={index < blocks.length - 1}
+              canDelete={blocks.length > 1}
+              onUpdate={(changes: Partial<NoteBlock>) => updateBlock(block.id, changes)}
+              onDelete={() => deleteBlock(block.id)}
+              onMoveUp={() => moveBlock(block.id, 'up')}
+              onMoveDown={() => moveBlock(block.id, 'down')}
+              onAddBlockAfter={() => addBlockAfter(block.id)}
+            />
+          ))}
+        </div>
 
-      {/* Add block button at bottom */}
-      <div className="mt-6 flex justify-center">
-        <Button 
-          onClick={addBlock}
-          variant="outline"
-          size="lg"
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Block
-        </Button>
+        {/* Add block button at bottom */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={addBlock}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Block
+          </Button>
+        </div>
       </div>
-    </div>
+    </NotesProvider>
   )
 }
