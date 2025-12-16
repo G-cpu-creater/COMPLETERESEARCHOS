@@ -10,6 +10,7 @@ import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import Image from '@tiptap/extension-image'
 import { useNotes } from './NotesContext'
 
 interface BlockEditorProps {
@@ -49,6 +50,13 @@ export function BlockEditor({
       TaskList,
       TaskItem.configure({
         nested: true,
+      }),
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg',
+        },
       }),
     ],
     content,

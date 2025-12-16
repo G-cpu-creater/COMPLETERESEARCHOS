@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { 
   Bold, 
   Italic, 
@@ -17,7 +17,9 @@ import {
   Highlighter,
   RemoveFormatting,
   Type,
-  Sparkles
+  Sparkles,
+  ImagePlus,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotes } from './NotesContext'
@@ -43,6 +45,8 @@ export function Ribbon() {
   const { activeEditor } = useNotes()
   const [textColorOpen, setTextColorOpen] = useState(false)
   const [highlightOpen, setHighlightOpen] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!activeEditor) {
     return (
@@ -111,6 +115,59 @@ export function Ribbon() {
   const removeHighlight = () => {
     activeEditor.chain().focus().unsetHighlight().run()
     setHighlightOpen(false)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB')
+      return
+    }
+
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to upload image')
+      }
+
+      const data = await response.json()
+      
+      // Insert image into editor
+      activeEditor.chain().focus().setImage({ src: data.url }).run()
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      alert(error instanceof Error ? error.message : 'Failed to upload image')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const openImagePicker = () => {
+    fileInputRef.current?.click()
   }
 
   return (
@@ -304,6 +361,30 @@ export function Ribbon() {
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        {/* Image Upload */}
+        <div className="flex items-center gap-1 pr-2 border-r border-gray-300">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={openImagePicker}
+            disabled={isUploading}
+            title="Insert Image"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
         {/* Clear Formatting */}
