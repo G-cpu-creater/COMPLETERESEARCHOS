@@ -35,16 +35,15 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional scientific writing assistant. Your task is to rephrase research text while preserving its exact meaning, technical accuracy, and key terminology. Generate 3 different variations with these tones: 1) Professional/Formal, 2) Clear/Concise, 3) Technical/Detailed. Keep all scientific terms, numbers, and citations unchanged. Output as a JSON array with objects containing "tone" and "text" fields.'
+            content: 'You are a professional scientific writing assistant. Rephrase the given text into simple, clear, and effective English while preserving the exact meaning and technical accuracy. Keep all scientific terms, numbers, and citations unchanged. Return only the rephrased text without any JSON formatting or extra structure.'
           },
           {
             role: 'user',
-            content: `Rephrase this research text in 3 different ways:\n\n${text}`
+            content: `Rephrase this text:\n\n${text}`
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
-        response_format: { type: 'json_object' }
+        max_tokens: 1000
       })
     })
 
@@ -67,28 +66,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse JSON response
-    let variations
-    try {
-      const parsed = JSON.parse(content)
-      variations = parsed.variations || parsed
-    } catch {
-      // Fallback: If not JSON, split by numbered list
-      const lines = content.split(/\d+\)\s+/).filter(Boolean)
-      variations = [
-        { tone: 'Professional', text: lines[0]?.trim() || content },
-        { tone: 'Concise', text: lines[1]?.trim() || content },
-        { tone: 'Technical', text: lines[2]?.trim() || content }
-      ]
-    }
-
+    // Return single rephrased text
     return NextResponse.json({
       original: text,
-      variations: Array.isArray(variations) ? variations : [
-        { tone: 'Professional', text: content },
-        { tone: 'Concise', text: content },
-        { tone: 'Technical', text: content }
-      ]
+      rephrased: content.trim()
     })
 
   } catch (error) {

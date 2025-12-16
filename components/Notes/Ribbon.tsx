@@ -23,7 +23,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotes } from './NotesContext'
-import { RephraseModal } from './RephraseModal'
 import {
   Popover,
   PopoverContent,
@@ -47,8 +46,7 @@ export function Ribbon() {
   const [textColorOpen, setTextColorOpen] = useState(false)
   const [highlightOpen, setHighlightOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [rephraseModalOpen, setRephraseModalOpen] = useState(false)
-  const [selectedText, setSelectedText] = useState('')
+  const [isRephrasing, setIsRephrasing] = useState(false)
   const [hasSelection, setHasSelection] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -194,7 +192,7 @@ export function Ribbon() {
     fileInputRef.current?.click()
   }
 
-  const handleRephraseClick = () => {
+  const handleRephraseClick = async () => {
     const { from, to } = activeEditor.state.selection
     const text = activeEditor.state.doc.textBetween(from, to, ' ')
     
@@ -202,16 +200,31 @@ export function Ribbon() {
       alert('Please select some text to rephrase')
       return
     }
-    
-    setSelectedText(text)
-    setRephraseModalOpen(true)
-  }
 
-  const handleReplaceText = (newText: string) => {
-    const { from, to } = activeEditor.state.selection
-    activeEditor.chain().focus().deleteRange({ from, to }).insertContent(newText).run()
-    setRephraseModalOpen(false)
-    setSelectedText('')
+    setIsRephrasing(true)
+    
+    try {
+      const response = await fetch('/api/ai/rephrase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to rephrase text')
+      }
+
+      const data = await response.json()
+      
+      // Replace selected text with rephrased version
+      activeEditor.chain().focus().deleteRange({ from, to }).insertContent(data.rephrased).run()
+    } catch (error) {
+      console.error('Rephrase failed:', error)
+      alert(error instanceof Error ? error.message : 'Failed to rephrase text')
+    } finally {
+      setIsRephrasing(false)
+    }
   }
 
   return (
@@ -448,27 +461,20 @@ export function Ribbon() {
           <Button
             variant="ghost"
             size="sm"
-            disabled={!hasSelection}
+            disabled={!hasSelection || isRephrasing}
             onClick={handleRephraseClick}
             title={hasSelection ? "AI Rephrase Selected Text" : "Select text to rephrase"}
             className="gap-1"
           >
-            <Sparkles className="h-4 w-4" />
-            <span className="text-xs">Rephrase</span>
+            {isRephrasing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            <span className="text-xs">{isRephrasing ? 'Rephrasing...' : 'Rephrase'}</span>
           </Button>
         </div>
       </div>
-
-      {/* Rephrase Modal */}
-      <RephraseModal
-        isOpen={rephraseModalOpen}
-        onClose={() => {
-          setRephraseModalOpen(false)
-          setSelectedText('')
-        }}
-        originalText={selectedText}
-        onReplace={handleReplaceText}
-      />
     </div>
   )
 }
