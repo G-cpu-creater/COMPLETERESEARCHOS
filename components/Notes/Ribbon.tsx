@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { 
   Bold, 
   Italic, 
@@ -49,7 +49,28 @@ export function Ribbon() {
   const [isUploading, setIsUploading] = useState(false)
   const [rephraseModalOpen, setRephraseModalOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
+  const [hasSelection, setHasSelection] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Track selection changes
+  React.useEffect(() => {
+    if (!activeEditor) return
+
+    const updateSelection = () => {
+      const { from, to } = activeEditor.state.selection
+      setHasSelection(from !== to)
+    }
+
+    // Update initially
+    updateSelection()
+
+    // Update on selection change
+    activeEditor.on('selectionUpdate', updateSelection)
+
+    return () => {
+      activeEditor.off('selectionUpdate', updateSelection)
+    }
+  }, [activeEditor])
 
   if (!activeEditor) {
     return (
@@ -192,8 +213,6 @@ export function Ribbon() {
     setRephraseModalOpen(false)
     setSelectedText('')
   }
-
-  const hasSelection = activeEditor.state.selection.from !== activeEditor.state.selection.to
 
   return (
     <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-2 sm:px-4 py-2 mb-4 shadow-sm">
