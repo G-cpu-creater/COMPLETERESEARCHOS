@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotes } from './NotesContext'
+import { RephraseModal } from './RephraseModal'
 import {
   Popover,
   PopoverContent,
@@ -46,6 +47,8 @@ export function Ribbon() {
   const [textColorOpen, setTextColorOpen] = useState(false)
   const [highlightOpen, setHighlightOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [rephraseModalOpen, setRephraseModalOpen] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!activeEditor) {
@@ -169,6 +172,28 @@ export function Ribbon() {
   const openImagePicker = () => {
     fileInputRef.current?.click()
   }
+
+  const handleRephraseClick = () => {
+    const { from, to } = activeEditor.state.selection
+    const text = activeEditor.state.doc.textBetween(from, to, ' ')
+    
+    if (!text.trim()) {
+      alert('Please select some text to rephrase')
+      return
+    }
+    
+    setSelectedText(text)
+    setRephraseModalOpen(true)
+  }
+
+  const handleReplaceText = (newText: string) => {
+    const { from, to } = activeEditor.state.selection
+    activeEditor.chain().focus().deleteRange({ from, to }).insertContent(newText).run()
+    setRephraseModalOpen(false)
+    setSelectedText('')
+  }
+
+  const hasSelection = activeEditor.state.selection.from !== activeEditor.state.selection.to
 
   return (
     <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-2 mb-4 shadow-sm">
@@ -399,13 +424,14 @@ export function Ribbon() {
           </Button>
         </div>
 
-        {/* AI Rephrase (placeholder for Step 5) */}
+        {/* AI Rephrase */}
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            disabled
-            title="AI Rephrase (Coming in Step 5)"
+            disabled={!hasSelection}
+            onClick={handleRephraseClick}
+            title={hasSelection ? "AI Rephrase Selected Text" : "Select text to rephrase"}
             className="gap-1"
           >
             <Sparkles className="h-4 w-4" />
@@ -413,6 +439,17 @@ export function Ribbon() {
           </Button>
         </div>
       </div>
+
+      {/* Rephrase Modal */}
+      <RephraseModal
+        isOpen={rephraseModalOpen}
+        onClose={() => {
+          setRephraseModalOpen(false)
+          setSelectedText('')
+        }}
+        originalText={selectedText}
+        onReplace={handleReplaceText}
+      />
     </div>
   )
 }
