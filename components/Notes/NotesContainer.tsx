@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Block } from './Block'
 import { NotesProvider } from './NotesContext'
 import { Ribbon } from './Ribbon'
+import { ErrorBoundary } from './ErrorBoundary'
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
@@ -157,20 +158,42 @@ export function NotesContainer({ noteId }: NotesContainerProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 mb-2" />
-          <p className="text-sm text-gray-600">Loading notes...</p>
-        </div>
-      </div>
+      <ErrorBoundary>
+        <NotesProvider>
+          <div className="h-full overflow-auto bg-gray-50">
+            <Ribbon />
+            <div className="px-6 pt-2 pb-6">
+              {/* Loading skeleton */}
+              <div className="space-y-4 animate-pulse">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </NotesProvider>
+      </ErrorBoundary>
     )
   }
 
   return (
-    <NotesProvider>
-      <div className="h-full overflow-auto bg-gray-50">
-        {/* Formatting Ribbon */}
-        <Ribbon />
+    <ErrorBoundary>
+      <NotesProvider>
+        <div className="h-full overflow-auto bg-gray-50">
+          {/* Formatting Ribbon */}
+          <Ribbon />
 
         <div className="px-6 pt-2 pb-6">
           {/* Save indicator */}
@@ -229,5 +252,6 @@ export function NotesContainer({ noteId }: NotesContainerProps) {
         </div>
       </div>
     </NotesProvider>
+    </ErrorBoundary>
   )
 }

@@ -38,10 +38,10 @@ export function Block({
       "
       data-block-id={block.id}
     >
-      {/* Control buttons (visible on hover) */}
+      {/* Control buttons (visible on hover, always visible on mobile) */}
       <div className="
         absolute top-3 right-3 
-        opacity-0 group-hover:opacity-100 
+        opacity-100 sm:opacity-0 sm:group-hover:opacity-100 
         transition-opacity duration-200
         flex items-center gap-1
       ">
@@ -80,7 +80,7 @@ export function Block({
       </div>
 
       {/* Block content */}
-      <div className="space-y-4 pr-24">
+      <div className="space-y-4 pr-16 sm:pr-24">
         <BlockHeader
           value={block.header}
           onChange={(header: string) => onUpdate({ header })}
