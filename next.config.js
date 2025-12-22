@@ -15,6 +15,14 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
 
+    // Ensure proper module resolution
+    config.resolve = config.resolve || {};
+    config.resolve.extensions = ['.tsx', '.ts', '.jsx', '.js', '.json'];
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': __dirname,
+    };
+
     // Tree-shaking optimization
     config.optimization = {
       ...config.optimization,
