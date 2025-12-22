@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -20,7 +22,7 @@ const nextConfig = {
     config.resolve.extensions = ['.tsx', '.ts', '.jsx', '.js', '.json'];
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': __dirname,
+      '@': path.resolve(__dirname),
     };
 
     // Tree-shaking optimization
