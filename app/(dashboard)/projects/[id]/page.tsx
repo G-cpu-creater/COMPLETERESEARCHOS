@@ -114,7 +114,7 @@ export default function ProjectDetailPage() {
   }
 
   // Find Overview Page (first page or specific title)
-  const overviewPage = project?.pages?.[0]
+  const overviewPage = project.pages?.[0]
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -246,9 +246,6 @@ export default function ProjectDetailPage() {
               {researchTools.map((tool) => {
                 const Icon = tool.icon
                 return (
-          </div>
-        </div>
-      </div>
                   <Card
                     key={tool.id}
                     className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-500 group"
@@ -322,6 +319,9 @@ export default function ProjectDetailPage() {
           <ExportPanel projectId={projectId} projectTitle={project.title} />
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
