@@ -44,36 +44,7 @@ export default function ProjectDetailPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Loading project...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!project) {
-    return (
-      <div className="p-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h3 className="text-lg font-semibold mb-2">Project not found</h3>
-            <p className="text-gray-600">
-              This project may have been deleted or you don't have access to it.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Find Overview Page (first page or specific title)
-  const overviewPage = project.pages?.[0]
-
-  // Research Tools - Keep only: Team Collaboration, Export & Publish, Lab Notebook, Literature
+  // Research Tools - defined before early returns
   const researchTools = [
     {
       id: 'collaboration',
@@ -108,12 +79,42 @@ export default function ProjectDetailPage() {
       iconColor: 'text-purple-600',
     },
   ]
-// Navigation items for sidebar
+
+  // Navigation items for sidebar
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'visualization', label: 'Visualization', icon: BarChart3 },
     { id: 'insights', label: 'Insights', icon: Lightbulb },
   ]
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading project...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!project) {
+    return (
+      <div className="p-8">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <h3 className="text-lg font-semibold mb-2">Project not found</h3>
+            <p className="text-gray-600">
+              This project may have been deleted or you don't have access to it.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Find Overview Page (first page or specific title)
+  const overviewPage = project?.pages?.[0]
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
