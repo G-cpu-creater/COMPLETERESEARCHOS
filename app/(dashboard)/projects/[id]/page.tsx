@@ -128,14 +128,11 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* NEW TABS: Overview, Data & Analysis, Visualization, Insights */}
+      {/* NEW TABS: Overview, Visualization, Insights */}
       <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
         <TabsList className="inline-flex h-auto p-1 bg-gray-100 rounded-lg">
           <TabsTrigger value="overview" className="rounded-md px-4 py-2">
             Overview
-          </TabsTrigger>
-          <TabsTrigger value="data" className="rounded-md px-4 py-2">
-            Data & Analysis
           </TabsTrigger>
           <TabsTrigger value="visualization" className="rounded-md px-4 py-2">
             Visualization
@@ -219,11 +216,6 @@ export default function ProjectDetailPage() {
               />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Data & Analysis Tab - NEW */}
-        <TabsContent value="data">
-          <DataManagementTab />
         </TabsContent>
 
         {/* Visualization Tab - NEW */}
