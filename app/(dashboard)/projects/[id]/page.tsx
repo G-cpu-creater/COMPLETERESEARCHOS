@@ -14,8 +14,10 @@ import { CollaborationPanel } from '@/components/collaboration/CollaborationPane
 import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { LiteratureManager } from '@/components/literature/LiteratureManager'
 import { ExportPanel } from '@/components/export/ExportPanel'
-import { Users, BookOpen, FileText, Download, ArrowRight, Sparkles } from 'lucide-react'
+import { Users, BookOpen, FileText, Download, ArrowRight, Sparkles, Home, BarChart3, Lightbulb } from 'lucide-react'
 import { NotesContainer } from '@/components/Notes/NotesContainer'
+import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
+import { SidebarToggle } from '@/components/navigation/SidebarToggle'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -23,6 +25,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeView, setActiveView] = useState('overview')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (projectId) {
@@ -107,40 +110,49 @@ export default function ProjectDetailPage() {
     },
   ]
 
+  const navigationItems = [
+    { id: 'overview', label: 'Overview', icon: Home },
+    { id: 'visualization', label: 'Visualization', icon: BarChart3 },
+    { id: 'insights', label: 'Insights', icon: Lightbulb },
+  ]
+
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
-            {project.description && (
-              <p className="text-gray-600">{project.description}</p>
-            )}
-            {project.researchType && (
-              <div className="mt-2">
-                <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded">
-                  {project.researchType}
-                </span>
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      <ProjectSidebar
+        isOpen={sidebarOpen}
+        activeView={activeView}
+        onViewChange={setActiveView}
+        navigationItems={navigationItems}
+        researchTools={researchTools}
+        onOpenChange={setSidebarOpen}
+      />
+
+      <SidebarToggle
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+
+      <div className="flex-1 transition-all duration-300 ml-0">
+        <div className="h-full overflow-y-auto">
+          <div className="p-8">
+            {activeView === 'overview' && (
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
+                {project.description && (
+                  <p className="text-gray-600">{project.description}</p>
+                )}
+                {project.researchType && (
+                  <div className="mt-2">
+                    <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded">
+                      {project.researchType}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* NEW TABS: Overview, Visualization, Insights */}
-      <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-        <TabsList className="inline-flex h-auto p-1 bg-gray-100 rounded-lg">
-          <TabsTrigger value="overview" className="rounded-md px-4 py-2">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="visualization" className="rounded-md px-4 py-2">
-            Visualization
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="rounded-md px-4 py-2">
-            Insights
-          </TabsTrigger>
-        </TabsList>
+            <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
+              <TabsList className="hidden"></TabsList>
 
         {/* Overview Tab - Notes Container */}
         <TabsContent value="overview" className="space-y-6">
@@ -245,6 +257,9 @@ export default function ProjectDetailPage() {
           <ExportPanel projectId={projectId} projectTitle={project.title} />
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
