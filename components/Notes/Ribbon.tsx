@@ -126,16 +126,20 @@ export function Ribbon({ isSaving = false, onAddBlock }: RibbonProps = {}) {
   }
 
   const convertHardBreaksToListItems = (listType: 'bulletList' | 'orderedList' | 'taskList') => {
-    const { state } = activeEditor
+    const { state, schema } = activeEditor
     const { from, to } = state.selection
-    const { doc, tr } = state
+    const { doc } = state
 
-    // Get the content in the selection
+    // Get the text content and check for hard breaks
+    let textContent = ''
     let hasHardBreaks = false
-    doc.nodesBetween(from, to, (node) => {
-      if (node.type.name === 'hardBreak') {
+    
+    doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type.name === 'text') {
+        textContent += node.text
+      } else if (node.type.name === 'hardBreak') {
+        textContent += '\n'
         hasHardBreaks = true
-        return false
       }
     })
 
@@ -151,29 +155,29 @@ export function Ribbon({ isSaving = false, onAddBlock }: RibbonProps = {}) {
       return
     }
 
-    // Split hard breaks into separate paragraphs first
-    let pos = from
-    doc.nodesBetween(from, to, (node, nodePos) => {
-      if (node.type.name === 'hardBreak') {
-        // Replace hard break with paragraph break
-        const mappedPos = tr.mapping.map(nodePos)
-        tr.replaceWith(mappedPos, mappedPos + 1, state.schema.nodes.paragraph.create())
-      }
+    // Split text by newlines and create list items
+    const lines = textContent.split('\n').filter(line => line.trim())
+    
+    // Create list node based on type
+    const listNodeType = listType === 'bulletList' ? schema.nodes.bulletList : 
+                        listType === 'orderedList' ? schema.nodes.orderedList :
+                        schema.nodes.taskList
+    
+    const listItemType = listType === 'taskList' ? schema.nodes.taskItem : schema.nodes.listItem
+    
+    // Create list items from each line
+    const listItems = lines.map(line => {
+      const paragraphNode = schema.nodes.paragraph.create(null, schema.text(line))
+      const attrs = listType === 'taskList' ? { checked: false } : null
+      return listItemType.create(attrs, paragraphNode)
     })
 
-    // Apply the transaction
-    activeEditor.view.dispatch(tr)
+    // Create the list
+    const listNode = listNodeType.create(null, listItems)
 
-    // Now toggle the list
-    setTimeout(() => {
-      if (listType === 'bulletList') {
-        activeEditor.chain().focus().toggleBulletList().run()
-      } else if (listType === 'orderedList') {
-        activeEditor.chain().focus().toggleOrderedList().run()
-      } else {
-        activeEditor.chain().focus().toggleTaskList().run()
-      }
-    }, 0)
+    // Replace the selection with the list
+    const tr = state.tr.replaceWith(from, to, listNode)
+    activeEditor.view.dispatch(tr)
   }
 
   const setHeading = (level: 1 | 2 | 3) => {
