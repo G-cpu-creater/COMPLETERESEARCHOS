@@ -192,31 +192,9 @@ export function NotesContainer({ noteId }: NotesContainerProps) {
     <ErrorBoundary>
       <NotesProvider>
         <div className="h-full flex flex-col bg-gray-50">
-          {/* Header with save status and Add Block button */}
-          <div className="flex-shrink-0 px-4 py-3 bg-white border-b flex items-center justify-between">
-            <div className="text-sm">
-              {isSaving ? (
-                <span className="flex items-center text-blue-600">
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  Saving...
-                </span>
-              ) : (
-                <span className="text-gray-500">All changes saved</span>
-              )}
-            </div>
-            <Button 
-              onClick={addBlock}
-              size="sm"
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Block
-            </Button>
-          </div>
-
-          {/* Formatting Ribbon - Sticky */}
-          <div className="flex-shrink-0 sticky top-0 z-10 bg-white border-b">
-            <Ribbon />
+          {/* Formatting Ribbon with Save Status and Add Block - Sticky */}
+          <div className="flex-shrink-0 sticky top-0 z-10">
+            <Ribbon isSaving={isSaving} onAddBlock={addBlock} />
           </div>
 
           {/* Scrollable content area */}

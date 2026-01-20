@@ -19,7 +19,8 @@ import {
   Type,
   Sparkles,
   ImagePlus,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotes } from './NotesContext'
@@ -28,6 +29,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+
+interface RibbonProps {
+  isSaving?: boolean
+  onAddBlock?: () => void
+}
 
 const COLOR_PRESETS = [
   '#000000', '#374151', '#DC2626', '#EA580C', '#D97706', 
@@ -41,7 +47,7 @@ const HIGHLIGHT_PRESETS = [
   '#E0E7FF', '#DBEAFE', '#D1FAE5', '#D1FAE5', '#CCFBF1'
 ]
 
-export function Ribbon() {
+export function Ribbon({ isSaving = false, onAddBlock }: RibbonProps = {}) {
   const { activeEditor } = useNotes()
   const [textColorOpen, setTextColorOpen] = useState(false)
   const [highlightOpen, setHighlightOpen] = useState(false)
@@ -229,7 +235,8 @@ export function Ribbon() {
 
   return (
     <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-2 sm:px-4 py-2 mb-4 shadow-sm">
-      <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
         {/* Text Style Buttons */}
         <div className="flex items-center gap-1 pr-2 border-r border-gray-300">
           <Button
@@ -473,6 +480,34 @@ export function Ribbon() {
             )}
             <span className="text-xs">{isRephrasing ? 'Rephrasing...' : 'Rephrase'}</span>
           </Button>
+        </div>
+        </div>
+
+        {/* Right side: Save indicator and Add Block button */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Save indicator */}
+          <div className="text-sm">
+            {isSaving ? (
+              <span className="flex items-center text-blue-600">
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                Saving...
+              </span>
+            ) : (
+              <span className="text-gray-500">All changes saved</span>
+            )}
+          </div>
+          
+          {/* Add Block button */}
+          {onAddBlock && (
+            <Button 
+              onClick={onAddBlock}
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Block
+            </Button>
+          )}
         </div>
       </div>
     </div>
