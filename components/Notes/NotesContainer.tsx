@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Block } from './Block'
 import { NotesProvider } from './NotesContext'
 import { Ribbon } from './Ribbon'
@@ -88,7 +88,7 @@ export function NotesContainer({ noteId, onSavingChange, exposeAddBlock }: Notes
     return () => clearTimeout(timer)
   }, [blocks, noteId, isLoading, onSavingChange])
 
-  const addBlock = () => {
+  const addBlock = useCallback(() => {
     const newBlock: NoteBlock = {
       id: uuidv4(),
       header: 'New block header name',
@@ -96,14 +96,14 @@ export function NotesContainer({ noteId, onSavingChange, exposeAddBlock }: Notes
       order: blocks.length + 1
     }
     setBlocks([...blocks, newBlock])
-  }
+  }, [blocks])
 
   // Expose addBlock function to parent
   useEffect(() => {
     if (exposeAddBlock) {
       exposeAddBlock(addBlock)
     }
-  }, [exposeAddBlock])
+  }, [exposeAddBlock, addBlock])
 
   const deleteBlock = (blockId: string) => {
     // Don't allow deleting the last block

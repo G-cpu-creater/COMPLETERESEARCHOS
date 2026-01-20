@@ -28,7 +28,7 @@ export default function ProjectDetailPage() {
   const [activeView, setActiveView] = useState('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [addBlockFn, setAddBlockFn] = useState<(() => void) | null>(null)
+  const [addBlockFn, setAddBlockFn] = useState<any>(null)
 
   useEffect(() => {
     if (projectId) {
@@ -181,7 +181,7 @@ export default function ProjectDetailPage() {
                 <NotesContainer 
                   noteId={overviewPage.id} 
                   onSavingChange={setIsSaving}
-                  exposeAddBlock={(fn) => setAddBlockFn(() => fn)}
+                  exposeAddBlock={setAddBlockFn}
                 />
               </div>
             </div>
