@@ -32,6 +32,8 @@ model Project {
   updatedAt          DateTime           @updatedAt @map("updated_at")
   lastAccessed       DateTime           @default(now()) @map("last_accessed")
   settings           Json               @default("{}")
+  chatMessages       ChatMessage[]
+  chatSummary        ChatSummary?
   collaborators      Collaborator[]
   comments           Comment[]
   dataVersions       DataVersion[]
@@ -364,4 +366,30 @@ model ExportRecord {
 
   @@index([projectId])
   @@map("export_records")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  role      String
+  content   String   @db.Text
+  tokens    Int?
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatSummary {
+  id               String   @id @default(uuid())
+  projectId        String   @unique @map("project_id")
+  summary          String   @db.Text
+  messageCount     Int      @default(0) @map("message_count")
+  lastSummarizedAt DateTime @map("last_summarized_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("chat_summaries")
 }

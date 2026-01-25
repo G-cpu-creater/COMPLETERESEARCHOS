@@ -24,6 +24,7 @@ interface Message {
 }
 
 interface ResearchAIChatProps {
+  projectId?: string // NEW: Optional project ID for memory
   context?: {
     datasetInfo?: string
     plotInfo?: string
@@ -86,18 +87,65 @@ function formatMarkdown(text: string): JSX.Element {
 }
 
 // ChatGPT-like interface powered by Groq Llama 3.1 8B
-export function ResearchAIChat({ context, fullScreen = false, initialUserMessage, sidebarMode = false }: ResearchAIChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Hello! I\'m your AI research assistant. I can help you analyze data, interpret plots, refine experimental ideas, and suggest next steps. How can I assist with your research today?',
-      timestamp: new Date(),
-    },
-  ])
+export function ResearchAIChat({ projectId, context, fullScreen = false, initialUserMessage, sidebarMode = false }: ResearchAIChatProps) {
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [includeSearch, setIncludeSearch] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { toast } = useToast()
+
+  // Load chat history when projectId is provided
+  useEffect(() => {
+    if (projectId) {
+      loadChatHistory()
+    } else {
+      // No projectId - show default greeting
+      setMessages([{
+        role: 'assistant',
+        content: 'Hello! I\'m your AI research assistant. I can help you analyze data, interpret plots, refine experimental ideas, and suggest next steps. How can I assist with your research today?',
+        timestamp: new Date(),
+      }])
+    }
+  }, [projectId])
+
+  const loadChatHistory = async () => {
+    if (!projectId) return
+    
+    setIsLoadingHistory(true)
+    try {
+      const res = await fetch(`/api/chat/history?projectId=${projectId}&limit=50`)
+      if (!res.ok) throw new Error('Failed to load history')
+      
+      const data = await res.json()
+      
+      if (data.messages && data.messages.length > 0) {
+        setMessages(data.messages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.createdAt)
+        })))
+      } else {
+        // No history - show greeting
+        setMessages([{
+          role: 'assistant',
+          content: 'Hello! I\'m your AI research assistant. I can help you analyze data, interpret plots, refine experimental ideas, and suggest next steps. How can I assist with your research today?',
+          timestamp: new Date(),
+        }])
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load chat history',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
 
@@ -135,37 +183,62 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
         }
       }
 
-      const payload = {
-        messages: messages.map(m => ({ role: m.role, content: m.content })).concat([{ role: userMessage.role, content: userMessage.content }]),
-        context: {
-          ...context,
-          projectInfo: (context?.projectInfo || '') + searchContext
-        },
+      // NEW: Use project-specific memory if projectId is provided
+      if (projectId) {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            message: content,
+            context: {
+              ...context,
+              projectInfo: (context?.projectInfo || '') + searchContext
+            }
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to send message')
+        }
+
+        const data = await response.json()
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: data.message,
+          timestamp: new Date(),
+        }
+        setMessages(prev => [...prev, assistantMessage])
+      } else {
+        // LEGACY: Stateless chat without project memory
+        const payload = {
+          messages: messages.map(m => ({ role: m.role, content: m.content })).concat([{ role: userMessage.role, content: userMessage.content }]),
+          context: {
+            ...context,
+            projectInfo: (context?.projectInfo || '') + searchContext
+          },
+        }
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to send message')
+        }
+
+        const data = await response.json()
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: data.message,
+          timestamp: new Date(),
+        }
+        setMessages(prev => [...prev, assistantMessage])
       }
-
-      console.log('Sending to /api/chat:', JSON.stringify(payload, null, 2))
-
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Chat API error response:', errorData)
-        throw new Error(errorData.error || 'Failed to send message')
-      }
-
-      const data = await response.json()
-
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.message,
-        timestamp: new Date(),
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       console.error('Chat error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to send message. Please try again.'
@@ -190,14 +263,43 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
     setInput('')
   }
 
-  const clearChat = () => {
-    setMessages([
-      {
+  const clearChat = async () => {
+    if (projectId) {
+      // Clear from database
+      try {
+        const response = await fetch('/api/chat/history', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId })
+        })
+        
+        if (response.ok) {
+          setMessages([{
+            role: 'assistant',
+            content: 'Chat cleared. How can I help you with your research?',
+            timestamp: new Date(),
+          }])
+          toast({
+            title: 'Success',
+            description: 'Chat history cleared'
+          })
+        }
+      } catch (error) {
+        console.error('Failed to clear chat:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to clear chat history',
+          variant: 'destructive'
+        })
+      }
+    } else {
+      // Local clear only
+      setMessages([{
         role: 'assistant',
         content: 'Chat cleared. How can I help you with your research?',
         timestamp: new Date(),
-      },
-    ])
+      }])
+    }
   }
 
   return (

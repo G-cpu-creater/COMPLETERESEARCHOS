@@ -6,7 +6,11 @@ import { ResearchAIChat } from './ResearchAIChat'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ChevronRight } from 'lucide-react'
 
-export function ProjectAIChatSidebar() {
+interface ProjectAIChatSidebarProps {
+  projectId: string // NEW: Required project ID
+}
+
+export function ProjectAIChatSidebar({ projectId }: ProjectAIChatSidebarProps) {
   const { isOpen, closeSidebar, openSidebar, toggleSidebar } = useProjectAIChat()
   const sidebarRef = useRef<HTMLDivElement>(null)
 
@@ -57,7 +61,7 @@ export function ProjectAIChatSidebar() {
 
             {/* Chat Interface */}
             <div className="flex-1 flex flex-col min-h-0">
-              <ResearchAIChat sidebarMode fullScreen />
+              <ResearchAIChat projectId={projectId} sidebarMode fullScreen />
             </div>
           </div>
         )}

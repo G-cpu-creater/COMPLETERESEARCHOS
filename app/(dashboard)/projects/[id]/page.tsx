@@ -199,7 +199,7 @@ export default function ProjectDetailPage() {
       </div>
       
       {/* AI Chat Sidebar - accessible from all tabs */}
-      <ProjectAIChatSidebar />
+      <ProjectAIChatSidebar projectId={projectId} />
     </div>
     </ProjectAIChatProvider>
   )
