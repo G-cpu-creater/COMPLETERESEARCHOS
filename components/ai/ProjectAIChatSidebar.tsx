@@ -66,7 +66,7 @@ export function ProjectAIChatSidebar() {
       {/* Toggle Button - Always visible, peeks out from edge */}
       <button
         onClick={toggleSidebar}
-        className={buttonClasses}
+        className={`${buttonClasses} h-10 w-10 flex items-center justify-center`}
       >
         <Sparkles className="h-6 w-6" />
       </button>
