@@ -188,7 +188,7 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
         </div>
       </CardHeader>
 
-      <CardContent className={`space-y-4 ${fullScreen ? 'flex-1 flex flex-col' : ''} ${sidebarMode ? 'px-3 py-2' : ''}`}>
+      <CardContent className={`${fullScreen || sidebarMode ? 'flex-1 flex flex-col min-h-0' : 'space-y-4'} ${sidebarMode ? 'px-3 py-2' : ''}`}>
         {/* Context indicators */}
         {context && (
           <div className="flex flex-wrap gap-2">
@@ -211,7 +211,7 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
         )}
 
         {/* Messages */}
-        <div className={`space-y-4 overflow-y-auto ${fullScreen ? 'flex-1' : 'h-96'} pr-2`}>
+        <div className={`space-y-4 overflow-y-auto ${sidebarMode || fullScreen ? 'flex-1 min-h-0' : 'h-96'} pr-2`}>
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -244,7 +244,7 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t bg-white">
+        <div className={`border-t bg-white ${sidebarMode ? 'p-3' : 'p-4'}`}>
           <div className="flex items-center space-x-2 mb-2">
             <Switch id="internet-search" checked={includeSearch} onCheckedChange={setIncludeSearch} />
             <Label htmlFor="internet-search" className="text-xs text-gray-500">Search internet for papers</Label>
