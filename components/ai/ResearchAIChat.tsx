@@ -146,8 +146,6 @@ export function ResearchAIChat({ projectId, context, fullScreen = false, initial
       setIsLoadingHistory(false)
     }
   }
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
