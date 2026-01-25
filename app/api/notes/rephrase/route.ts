@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
@@ -11,6 +11,12 @@ export async function POST(req: NextRequest) {
 
         if (!text) {
             return NextResponse.json({ error: 'Text is required' }, { status: 400 })
+        }
+
+        console.log('🔑 GROQ_API_KEY status:', GROQ_API_KEY ? 'LOADED ✓' : 'MISSING ✗')
+
+        if (!GROQ_API_KEY) {
+            return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 })
         }
 
         const prompt = `You are a helpful writing assistant. Rephrase the following text to be more clear, concise, and professional. 
