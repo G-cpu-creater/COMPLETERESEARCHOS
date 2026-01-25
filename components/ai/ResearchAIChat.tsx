@@ -258,34 +258,6 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
             </Button>
           </div>
         </div>
-
-        {/* Quick prompts */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInput('Analyze this dataset and suggest next steps')}
-            disabled={isLoading}
-          >
-            Analyze data
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInput('What insights can you find in this plot?')}
-            disabled={isLoading}
-          >
-            Interpret plot
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInput('Suggest improvements to my experiment')}
-            disabled={isLoading}
-          >
-            Improve experiment
-          </Button>
-        </div>
       </CardContent>
     </Card>
   )
