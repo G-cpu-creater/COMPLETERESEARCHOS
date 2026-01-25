@@ -44,6 +44,47 @@ async function searchSimilarPapers(query: string): Promise<any[]> {
   ]), 1000))
 }
 
+// Simple markdown formatter
+function formatMarkdown(text: string): JSX.Element {
+  const parts = []
+  let lastIndex = 0
+  
+  // Match **bold**, *italic*, `code`, and line breaks
+  const regex = /(\*\*.*?\*\*)|(\*.*?\*)|(`.*?`)|(\n)/g
+  let match
+  
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before match
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index))
+    }
+    
+    const matched = match[0]
+    if (matched.startsWith('**')) {
+      // Bold
+      parts.push(<strong key={match.index}>{matched.slice(2, -2)}</strong>)
+    } else if (matched.startsWith('*')) {
+      // Italic
+      parts.push(<em key={match.index}>{matched.slice(1, -1)}</em>)
+    } else if (matched.startsWith('`')) {
+      // Code
+      parts.push(<code key={match.index} className="bg-gray-200 px-1 rounded text-xs">{matched.slice(1, -1)}</code>)
+    } else if (matched === '\n') {
+      // Line break
+      parts.push(<br key={match.index} />)
+    }
+    
+    lastIndex = regex.lastIndex
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return <>{parts}</>
+}
+
 // ChatGPT-like interface powered by Groq Llama 3.1 8B
 export function ResearchAIChat({ context, fullScreen = false, initialUserMessage, sidebarMode = false }: ResearchAIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -223,7 +264,7 @@ export function ResearchAIChat({ context, fullScreen = false, initialUserMessage
                   : 'bg-gray-100 text-gray-900'
                   }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                <div className="text-sm whitespace-pre-wrap">{formatMarkdown(msg.content)}</div>
                 <p className="text-xs mt-2 opacity-70">
                   {msg.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </p>
