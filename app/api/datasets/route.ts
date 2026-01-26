@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { requireAuth } from '@/lib/auth'
 
 // GET /api/datasets?projectId=xxx - List datasets for a project
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = await requireAuth()
 
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get('projectId')
@@ -21,7 +18,7 @@ export async function GET(req: NextRequest) {
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        user: { email: session.user.email }
+        userId
       }
     })
 
@@ -35,8 +32,13 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ datasets })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching datasets:', error)
+
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch datasets' },
       { status: 500 }
@@ -47,10 +49,7 @@ export async function GET(req: NextRequest) {
 // POST /api/datasets - Create new dataset
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = await requireAuth()
 
     const body = await req.json()
     const { projectId, name, parsedData } = body
@@ -66,7 +65,7 @@ export async function POST(req: NextRequest) {
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        user: { email: session.user.email }
+        userId
       }
     })
 
@@ -83,6 +82,7 @@ export async function POST(req: NextRequest) {
         projectId,
         name,
         technique: 'spreadsheet',
+        fileUrl: '', // Empty for manual spreadsheet entries
         parsedData,
         rowCount: rows.length,
         columnCount: columns.length,
@@ -91,8 +91,13 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ dataset }, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating dataset:', error)
+
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     return NextResponse.json(
       { error: 'Failed to create dataset' },
       { status: 500 }
