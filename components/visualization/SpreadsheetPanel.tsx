@@ -145,8 +145,16 @@ export function SpreadsheetPanel({
     )
   }
 
+  // Debug logging
+  console.log('SpreadsheetPanel render:', {
+    columnsCount: columns.length,
+    rowsCount: rows.length,
+    columnDefsCount: columnDefs.length,
+    rowDataCount: rowData.length
+  })
+
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white border-2 border-red-500">
       {/* Home Ribbon - Excel-like toolbar */}
       <div className="border-b bg-gray-50 p-3 flex items-center gap-3">
         {/* Hidden file input */}
@@ -198,7 +206,7 @@ export function SpreadsheetPanel({
       </div>
 
       {/* AG Grid Spreadsheet */}
-      <div className="flex-1 ag-theme-alpine">
+      <div className="flex-1 ag-theme-alpine border-2 border-blue-500" style={{ height: 'calc(100% - 60px)', minHeight: '500px' }}>
         <AgGridReact
           columnDefs={columnDefs}
           rowData={rowData}
