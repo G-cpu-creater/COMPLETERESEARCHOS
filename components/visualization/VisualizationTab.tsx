@@ -1,20 +1,36 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Sparkles } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { SpreadsheetPanel } from './SpreadsheetPanel'
+import { useSpreadsheetData } from '@/lib/hooks/useSpreadsheetData'
 
 export function VisualizationTab() {
+  const params = useParams()
+  const projectId = params.id as string
+
+  const {
+    columns,
+    rows,
+    isDirty,
+    isLoading,
+    updateCell,
+    updateColumnName,
+    saveDataset,
+    uploadFile
+  } = useSpreadsheetData(projectId)
+
   return (
-    <div className="h-full flex items-center justify-center bg-gray-50">
-      <Card className="max-w-2xl">
-        <CardContent className="p-12 text-center">
-          <Sparkles className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Visualization Tab</h2>
-          <p className="text-gray-600">
-            This tab is ready to be redesigned with new visualization features.
-          </p>
-        </CardContent>
-      </Card>
+    <div className="h-[calc(100vh-200px)]">
+      <SpreadsheetPanel
+        columns={columns}
+        rows={rows}
+        isDirty={isDirty}
+        isLoading={isLoading}
+        onCellEdit={updateCell}
+        onHeaderEdit={updateColumnName}
+        onSave={saveDataset}
+        onUpload={uploadFile}
+      />
     </div>
   )
 }

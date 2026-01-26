@@ -51,6 +51,56 @@ export async function GET(
   }
 }
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const userId = await requireAuth()
+    const body = await request.json()
+    const { name, parsedData } = body
+
+    // Verify dataset exists and user has access
+    const existingDataset = await prisma.dataset.findFirst({
+      where: {
+        id: params.id,
+        project: { userId },
+      },
+    })
+
+    if (!existingDataset) {
+      return NextResponse.json({ error: 'Dataset not found' }, { status: 404 })
+    }
+
+    // Update metadata if parsedData changed
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (parsedData !== undefined) {
+      updateData.parsedData = parsedData
+      updateData.rowCount = parsedData.rows?.length || 0
+      updateData.columnCount = parsedData.columns?.length || 0
+    }
+
+    const dataset = await prisma.dataset.update({
+      where: { id: params.id },
+      data: updateData,
+    })
+
+    return NextResponse.json({ dataset })
+  } catch (error: any) {
+    console.error('Update dataset error:', error)
+
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to update dataset' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
