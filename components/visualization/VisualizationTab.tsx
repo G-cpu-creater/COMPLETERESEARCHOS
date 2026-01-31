@@ -405,7 +405,10 @@ export function VisualizationTab() {
         autosize: false,
         margin: { l: 60, r: 20, t: 60, b: 60 },
       },
-      config: { responsive: false },
+      config: { 
+        responsive: false,
+        scrollZoom: true,
+      },
     })
   }
 
