@@ -100,7 +100,7 @@ export function PlotCard({ plot }: PlotCardProps) {
         borderwidth: 1,
       },
       autosize: false,
-      margin: { l: 60, r: 20, t: 60, b: 60 },
+      margin: { l: 60, r: 20, t: 40, b: 80 },
     }
 
     return {
@@ -134,24 +134,19 @@ export function PlotCard({ plot }: PlotCardProps) {
       bounds="parent"
       className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
     >
-      <div className="relative w-full h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50 cursor-move">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <span className="font-semibold">Plot</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => deletePlot(plot.id)}
-            className="h-6 w-6 p-0 hover:bg-red-100"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
+      <div className="relative w-full h-full">
+        {/* Delete Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => deletePlot(plot.id)}
+          className="absolute top-2 right-2 z-20 h-6 w-6 p-0 hover:bg-red-100 bg-white/80"
+        >
+          <X className="h-3 w-3" />
+        </Button>
 
         {/* Plot Area with Axis Drop Zones */}
-        <div className="relative flex-1">
+        <div className="relative w-full h-full">
           <PlotComponent
             data={plotData.data}
             layout={plotData.layout}

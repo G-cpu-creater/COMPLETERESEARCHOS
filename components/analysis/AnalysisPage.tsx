@@ -28,14 +28,18 @@ export function AnalysisPage() {
     if (dragData?.type === 'variable' && dropData?.type === 'canvas') {
       const variableName = dragData.name
       
-      // Calculate drop position relative to canvas
-      const canvasRect = (over as any).rect?.current
-      const dropPosition = {
-        x: Math.max(20, (event.activatorEvent as MouseEvent).clientX - 250),
-        y: Math.max(20, (event.activatorEvent as MouseEvent).clientY - 100)
+      // Calculate center position of canvas (accounting for variable ribbon width)
+      const canvasWidth = window.innerWidth - 256 // Subtract ribbon width
+      const canvasHeight = window.innerHeight
+      const plotWidth = 500
+      const plotHeight = 400
+      
+      const centerPosition = {
+        x: (canvasWidth - plotWidth) / 2,
+        y: (canvasHeight - plotHeight) / 2
       }
       
-      createPlot(variableName, dropPosition)
+      createPlot(variableName, centerPosition)
     }
     
     // Variable dragged to axis - update axis
