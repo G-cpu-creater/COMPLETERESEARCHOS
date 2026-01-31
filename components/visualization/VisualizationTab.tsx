@@ -178,16 +178,40 @@ export function VisualizationTab() {
     }
 
     return () => {
-      // Cleanup
-      if (jspreadsheet) {
-        try {
-          jspreadsheet.destroy()
-        } catch (e) {
-          console.error('Cleanup error:', e)
-        }
-      }
+      // Don't destroy on unmount - keep the instance for when we come back
     }
   }, [])
+
+  // Separate effect to restore spreadsheet when component mounts and store has data
+  useEffect(() => {
+    if (!isLoading && window.jspreadsheet && spreadsheetRef.current && !jspreadsheet) {
+      // Restore from store if data exists
+      if (spreadsheetData && storedHeaders && spreadsheetData.length > 0) {
+        const table = window.jspreadsheet(spreadsheetRef.current, {
+          data: spreadsheetData,
+          columns: storedHeaders.map((header) => ({
+            type: 'text',
+            title: String(header || ''),
+            width: 120
+          })),
+          minDimensions: [storedHeaders.length, Math.max(spreadsheetData.length, 20)],
+          allowInsertRow: true,
+          allowInsertColumn: true,
+          allowDeleteRow: true,
+          allowDeleteColumn: true,
+          allowRenameColumn: true,
+          contextMenu: true,
+          tableOverflow: true,
+          tableHeight: '600px',
+          tableWidth: '100%',
+          onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+            updateSelectedColumns(instance, x1, y1, x2, y2)
+          },
+        })
+        setJspreadsheet(table)
+      }
+    }
+  }, [isLoading, spreadsheetData, storedHeaders])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
