@@ -11,7 +11,7 @@ import {
 import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel'
 import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { ExportPanel } from '@/components/export/ExportPanel'
-import { Users, BookOpen, Download, Home, BarChart3, LineChart } from 'lucide-react'
+import { Users, BookOpen, Download } from 'lucide-react'
 import { NotesContainer } from '@/components/Notes/NotesContainer'
 import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
 import { SidebarToggle } from '@/components/navigation/SidebarToggle'
@@ -102,11 +102,7 @@ export default function ProjectDetailPage() {
     },
   ]
 
-  const navigationItems = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'visualization', label: 'Visualization', icon: BarChart3 },
-    { id: 'analysis', label: 'Analysis', icon: LineChart },
-  ]
+  const navigationItems: any[] = []
 
   return (
     <ProjectAIChatProvider projectId={projectId}>
@@ -127,6 +123,49 @@ export default function ProjectDetailPage() {
 
         <div className="flex-1 transition-all duration-300 ml-0">
           <div className="h-full overflow-y-auto">
+            {/* Top Navigation Bar */}
+            <div className="border-b bg-white sticky top-0 z-10 shadow-sm">
+              <div className="px-8 py-4">
+                <div className="flex items-center justify-center gap-32">
+                  {/* Analysis Button - Left */}
+                  <button
+                    onClick={() => setActiveView('analysis')}
+                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                      activeView === 'analysis'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Analysis
+                  </button>
+
+                  {/* Visualization Button - Center */}
+                  <button
+                    onClick={() => setActiveView('visualization')}
+                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                      activeView === 'visualization'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Visualization
+                  </button>
+
+                  {/* Overview Button - Right */}
+                  <button
+                    onClick={() => setActiveView('overview')}
+                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                      activeView === 'overview'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Overview
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="p-8">
             {activeView === 'overview' && (
               <div className="mb-8">
