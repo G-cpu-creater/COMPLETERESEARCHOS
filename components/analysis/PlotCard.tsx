@@ -48,27 +48,29 @@ export function PlotCard({ plot }: PlotCardProps) {
       } : undefined,
     }
 
+    const layout: any = {
+      title: {
+        text: `${plot.yVariable} vs ${plot.xVariable}`,
+        font: { size: 14 }
+      },
+      xaxis: {
+        title: { text: plot.xVariable },
+        showgrid: plot.showGrid,
+        gridcolor: '#e5e5e5',
+      },
+      yaxis: {
+        title: { text: plot.yVariable },
+        showgrid: plot.showGrid,
+        gridcolor: '#e5e5e5',
+      },
+      showlegend: plot.showLegend,
+      autosize: true,
+      margin: { l: 50, r: 20, t: 40, b: 40 },
+    }
+
     return {
       data: [trace],
-      layout: {
-        title: {
-          text: `${plot.yVariable} vs ${plot.xVariable}`,
-          font: { size: 14 }
-        },
-        xaxis: {
-          title: plot.xVariable,
-          showgrid: plot.showGrid,
-          gridcolor: '#e5e5e5',
-        },
-        yaxis: {
-          title: plot.yVariable,
-          showgrid: plot.showGrid,
-          gridcolor: '#e5e5e5',
-        },
-        showlegend: plot.showLegend,
-        autosize: true,
-        margin: { l: 50, r: 20, t: 40, b: 40 },
-      },
+      layout,
       config: {
         responsive: true,
         scrollZoom: true,
