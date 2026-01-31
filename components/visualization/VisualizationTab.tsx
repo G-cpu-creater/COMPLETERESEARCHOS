@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Upload, Plus, Trash2, BarChart3 } from 'lucide-react'
+import { Upload, Plus, Trash2, BarChart3, TrendingUp } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import dynamic from 'next/dynamic'
+
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
 declare global {
   interface Window {
@@ -32,6 +44,19 @@ export function VisualizationTab() {
   } | null>(null)
   const [leftWidth, setLeftWidth] = useState(50) // Percentage
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedColumns, setSelectedColumns] = useState<number[]>([])
+  const [plotData, setPlotData] = useState<any>(null)
+  const [plotType, setPlotType] = useState<'scatter' | 'line' | 'bar' | 'scatter+line'>('scatter')
+  const [markerSize, setMarkerSize] = useState(8)
+  const [markerColor, setMarkerColor] = useState('#3b82f6')
+  const [xAxisTitle, setXAxisTitle] = useState('X Axis')
+  const [yAxisTitle, setYAxisTitle] = useState('Y Axis')
+  const [plotTitle, setPlotTitle] = useState('Data Plot')
+  const [showLegend, setShowLegend] = useState(true)
+  const [fontSize, setFontSize] = useState(12)
+  const [fontBold, setFontBold] = useState(false)
+  const [fontItalic, setFontItalic] = useState(false)
+  const [fontUnderline, setFontUnderline] = useState(false)
 
   useEffect(() => {
     // Load Jspreadsheet CSS
@@ -92,6 +117,9 @@ export function VisualizationTab() {
           tableOverflow: true,
           tableHeight: '600px',
           tableWidth: '100%',
+          onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+            updateSelectedColumns(instance, x1, y1, x2, y2)
+          },
         })
         setJspreadsheet(table)
       }
@@ -196,6 +224,9 @@ export function VisualizationTab() {
         tableOverflow: true,
         tableHeight: '600px',
         tableWidth: '100%',
+        onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+          updateSelectedColumns(instance, x1, y1, x2, y2)
+        },
       })
       setJspreadsheet(table)
     }
@@ -289,6 +320,113 @@ export function VisualizationTab() {
   const handleDividerMouseDown = () => {
     setIsDragging(true)
   }
+
+  const updateSelectedColumns = (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+    const cols = []
+    for (let i = Math.min(x1, x2); i <= Math.max(x1, x2); i++) {
+      cols.push(i)
+    }
+    setSelectedColumns(cols)
+  }
+
+  const handlePlot = () => {
+    if (!jspreadsheet || selectedColumns.length < 2) {
+      alert('Please select at least 2 columns to create a plot')
+      return
+    }
+
+    const data = jspreadsheet.getData()
+    const headers = jspreadsheet.getHeaders().split(',')
+    
+    // Get column data
+    const xCol = selectedColumns[0]
+    const yCol = selectedColumns[1]
+    
+    const xData = data.map((row: any[]) => row[xCol]).filter((val: any) => val !== '')
+    const yData = data.map((row: any[]) => row[yCol]).filter((val: any) => val !== '')
+    
+    const xLabel = headers[xCol] || `Column ${xCol + 1}`
+    const yLabel = headers[yCol] || `Column ${yCol + 1}`
+    
+    setXAxisTitle(xLabel)
+    setYAxisTitle(yLabel)
+    generatePlot(xData, yData, xLabel, yLabel)
+  }
+
+  const generatePlot = (xData: any[], yData: any[], xLabel: string, yLabel: string) => {
+    const trace: any = {
+      x: xData,
+      y: yData,
+      name: yLabel,
+    }
+
+    if (plotType === 'scatter') {
+      trace.type = 'scatter'
+      trace.mode = 'markers'
+      trace.marker = { size: markerSize, color: markerColor }
+    } else if (plotType === 'line') {
+      trace.type = 'scatter'
+      trace.mode = 'lines'
+      trace.line = { color: markerColor, width: 2 }
+    } else if (plotType === 'bar') {
+      trace.type = 'bar'
+      trace.marker = { color: markerColor }
+    } else if (plotType === 'scatter+line') {
+      trace.type = 'scatter'
+      trace.mode = 'lines+markers'
+      trace.marker = { size: markerSize, color: markerColor }
+      trace.line = { color: markerColor, width: 2 }
+    }
+
+    const fontFamily = 'Arial, sans-serif'
+    const fontWeight = fontBold ? 'bold' : 'normal'
+    const fontStyle = fontItalic ? 'italic' : 'normal'
+
+    setPlotData({
+      data: [trace],
+      layout: {
+        title: {
+          text: plotTitle,
+          font: {
+            size: fontSize + 4,
+            family: fontFamily,
+            weight: fontWeight,
+          },
+        },
+        xaxis: {
+          title: {
+            text: xAxisTitle,
+            font: { size: fontSize, family: fontFamily, weight: fontWeight },
+          },
+        },
+        yaxis: {
+          title: {
+            text: yAxisTitle,
+            font: { size: fontSize, family: fontFamily, weight: fontWeight },
+          },
+        },
+        showlegend: showLegend,
+        legend: { font: { size: fontSize - 2 } },
+        autosize: true,
+      },
+      config: { responsive: true },
+    })
+  }
+
+  // Update plot when settings change
+  useEffect(() => {
+    if (plotData && jspreadsheet && selectedColumns.length >= 2) {
+      const data = jspreadsheet.getData()
+      const headers = jspreadsheet.getHeaders().split(',')
+      const xCol = selectedColumns[0]
+      const yCol = selectedColumns[1]
+      const xData = data.map((row: any[]) => row[xCol]).filter((val: any) => val !== '')
+      const yData = data.map((row: any[]) => row[yCol]).filter((val: any) => val !== '')
+      const xLabel = headers[xCol] || `Column ${xCol + 1}`
+      const yLabel = headers[yCol] || `Column ${yCol + 1}`
+      generatePlot(xData, yData, xLabel, yLabel)
+    }
+  }, [plotType, markerSize, markerColor, xAxisTitle, yAxisTitle, plotTitle, showLegend, fontSize, fontBold, fontItalic, fontUnderline])
 
   if (isLoading) {
     return (
@@ -401,6 +539,18 @@ export function VisualizationTab() {
           Delete Column
         </Button>
 
+        <div className="h-6 w-px bg-gray-300" />
+
+        <Button
+          onClick={handlePlot}
+          disabled={selectedColumns.length < 2}
+          size="sm"
+          className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+        >
+          <TrendingUp className="h-4 w-4" />
+          Plot {selectedColumns.length >= 2 ? `(${selectedColumns.length} cols)` : ''}
+        </Button>
+
         <div className="ml-auto text-xs text-gray-500">
           Excel-like Spreadsheet • Click column headers to rename
         </div>
@@ -430,20 +580,169 @@ export function VisualizationTab() {
 
         {/* Right Panel - Plot Visualization */}
         <div 
-          className="overflow-auto bg-gray-50"
+          className="overflow-auto bg-gray-50 flex flex-col"
           style={{ width: `${100 - leftWidth}%` }}
         >
-          <div className="h-full flex items-center justify-center p-8">
-            <div className="text-center">
-              <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Plots are ready to be created
-              </h3>
-              <p className="text-sm text-gray-500">
-                Select data from the spreadsheet to generate visualizations
-              </p>
-            </div>
+          {/* Plot Area */}
+          <div className="flex-1 overflow-auto">
+            {plotData ? (
+              <div className="h-full p-4">
+                <Plot
+                  data={plotData.data}
+                  layout={plotData.layout}
+                  config={plotData.config}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center p-8">
+                <div className="text-center">
+                  <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    Plots are ready to be created
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Select at least 2 columns from the spreadsheet and click Plot
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Plot Settings Panel */}
+          {plotData && (
+            <div className="border-t bg-white p-4 space-y-4">
+              <h3 className="font-semibold text-sm mb-3">Plot Settings</h3>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Plot Type */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Plot Type</Label>
+                  <Select value={plotType} onValueChange={(v: any) => setPlotType(v)}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="scatter">Scatter Plot</SelectItem>
+                      <SelectItem value="line">Line Plot</SelectItem>
+                      <SelectItem value="bar">Bar Plot</SelectItem>
+                      <SelectItem value="scatter+line">Scatter + Line</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Marker Size */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Marker Size</Label>
+                  <Input
+                    type="number"
+                    value={markerSize}
+                    onChange={(e) => setMarkerSize(Number(e.target.value))}
+                    min={1}
+                    max={30}
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {/* Marker Color */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Marker Color</Label>
+                  <Input
+                    type="color"
+                    value={markerColor}
+                    onChange={(e) => setMarkerColor(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Font Size</Label>
+                  <Input
+                    type="number"
+                    value={fontSize}
+                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    min={8}
+                    max={24}
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {/* X-Axis Title */}
+                <div className="space-y-2">
+                  <Label className="text-xs">X-Axis Title</Label>
+                  <Input
+                    value={xAxisTitle}
+                    onChange={(e) => setXAxisTitle(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {/* Y-Axis Title */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Y-Axis Title</Label>
+                  <Input
+                    value={yAxisTitle}
+                    onChange={(e) => setYAxisTitle(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {/* Plot Title */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Plot Title</Label>
+                  <Input
+                    value={plotTitle}
+                    onChange={(e) => setPlotTitle(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+
+                {/* Legend */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Show Legend</Label>
+                  <Select value={showLegend ? 'true' : 'false'} onValueChange={(v) => setShowLegend(v === 'true')}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Yes</SelectItem>
+                      <SelectItem value="false">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Font Style Options */}
+              <div className="flex gap-2 items-center">
+                <Label className="text-xs mr-2">Font Style:</Label>
+                <Button
+                  variant={fontBold ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFontBold(!fontBold)}
+                  className="h-7 px-3 text-xs font-bold"
+                >
+                  B
+                </Button>
+                <Button
+                  variant={fontItalic ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFontItalic(!fontItalic)}
+                  className="h-7 px-3 text-xs italic"
+                >
+                  I
+                </Button>
+                <Button
+                  variant={fontUnderline ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFontUnderline(!fontUnderline)}
+                  className="h-7 px-3 text-xs underline"
+                >
+                  U
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
