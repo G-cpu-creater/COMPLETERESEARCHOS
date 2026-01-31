@@ -389,7 +389,6 @@ export function VisualizationTab() {
           mirror: false,
           zeroline: false,
           nticks: yTickCount,
-          scaleanchor: 'x',
         },
         showlegend: showLegend,
         legend: {
