@@ -29,25 +29,27 @@ export function PlotCard({ plot }: PlotCardProps) {
     
     const yData = dataset.data[plot.yVariable] || []
 
-    let mode: any = 'markers'
+    let mode: 'markers' | 'lines' | 'lines+markers' = 'markers'
     if (plot.plotType === 'line') mode = 'lines'
     if (plot.plotType === 'scatter+line') mode = 'lines+markers'
 
+    const trace: any = {
+      x: xData,
+      y: yData,
+      type: plot.plotType === 'bar' ? 'bar' : 'scatter',
+      mode: plot.plotType !== 'bar' ? mode : undefined,
+      marker: {
+        size: plot.markerSize,
+        color: plot.markerColor,
+      },
+      line: plot.plotType.includes('line') ? {
+        color: plot.markerColor,
+        width: 2,
+      } : undefined,
+    }
+
     return {
-      data: [{
-        x: xData,
-        y: yData,
-        type: plot.plotType === 'bar' ? 'bar' : 'scatter',
-        mode: plot.plotType !== 'bar' ? mode : undefined,
-        marker: {
-          size: plot.markerSize,
-          color: plot.markerColor,
-        },
-        line: plot.plotType.includes('line') ? {
-          color: plot.markerColor,
-          width: 2,
-        } : undefined,
-      }],
+      data: [trace],
       layout: {
         title: {
           text: `${plot.yVariable} vs ${plot.xVariable}`,
