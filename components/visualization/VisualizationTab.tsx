@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, Plus, Trash2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 declare global {
   interface Window {
@@ -16,6 +24,11 @@ export function VisualizationTab() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [jspreadsheet, setJspreadsheet] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showHeaderDialog, setShowHeaderDialog] = useState(false)
+  const [pendingFileData, setPendingFileData] = useState<{
+    headers: any[]
+    rows: any[][]
+  } | null>(null)
 
   useEffect(() => {
     // Load Jspreadsheet CSS
@@ -113,36 +126,25 @@ export function VisualizationTab() {
             return
           }
 
-          // First row as headers
-          const headers = jsonData[0].map((col: any) => String(col || ''))
-          const rows = jsonData.slice(1)
+          // Get first row to check if it's all numbers
+          const firstRow = jsonData[0]
+          const hasNumericHeaders = firstRow.every((col: any) => {
+            const val = String(col || '').trim()
+            return val !== '' && !isNaN(Number(val))
+          })
 
-          // Destroy existing spreadsheet
-          if (jspreadsheet && spreadsheetRef.current) {
-            jspreadsheet.destroy()
-          }
-
-          // Create new spreadsheet with uploaded data
-          if (spreadsheetRef.current && window.jspreadsheet) {
-            const table = window.jspreadsheet(spreadsheetRef.current, {
-              data: rows.length > 0 ? rows : Array(20).fill(null).map(() => Array(headers.length).fill('')),
-              columns: headers.map((header, i) => ({
-                type: 'text',
-                title: header || String.fromCharCode(65 + i),
-                width: 120
-              })),
-              minDimensions: [headers.length, Math.max(rows.length, 20)],
-              allowInsertRow: true,
-              allowInsertColumn: true,
-              allowDeleteRow: true,
-              allowDeleteColumn: true,
-              allowRenameColumn: true,
-              contextMenu: true,
-              tableOverflow: true,
-              tableHeight: '600px',
-              tableWidth: '100%',
+          // If first row contains all numbers, ask user
+          if (hasNumericHeaders && firstRow.length > 0) {
+            setPendingFileData({
+              headers: firstRow,
+              rows: jsonData.slice(1)
             })
-            setJspreadsheet(table)
+            setShowHeaderDialog(true)
+          } else {
+            // Use first row as headers (they're text)
+            const headers = firstRow.map((col: any) => String(col || ''))
+            const rows = jsonData.slice(1)
+            createSpreadsheetWithData(headers, rows)
           }
         } catch (error) {
           console.error('Parse error:', error)
@@ -163,6 +165,59 @@ export function VisualizationTab() {
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const createSpreadsheetWithData = (headers: any[], rows: any[][]) => {
+    // Destroy existing spreadsheet
+    if (jspreadsheet && spreadsheetRef.current) {
+      jspreadsheet.destroy()
+    }
+
+    // Create new spreadsheet with uploaded data
+    if (spreadsheetRef.current && window.jspreadsheet) {
+      const table = window.jspreadsheet(spreadsheetRef.current, {
+        data: rows.length > 0 ? rows : Array(20).fill(null).map(() => Array(headers.length).fill('')),
+        columns: headers.map((header, i) => ({
+          type: 'text',
+          title: String(header || ''),
+          width: 120
+        })),
+        minDimensions: [headers.length, Math.max(rows.length, 20)],
+        allowInsertRow: true,
+        allowInsertColumn: true,
+        allowDeleteRow: true,
+        allowDeleteColumn: true,
+        allowRenameColumn: true,
+        contextMenu: true,
+        tableOverflow: true,
+        tableHeight: '600px',
+        tableWidth: '100%',
+      })
+      setJspreadsheet(table)
+    }
+  }
+
+  const handleUseNumericHeaders = () => {
+    if (pendingFileData) {
+      const headers = pendingFileData.headers.map((col: any) => String(col || ''))
+      createSpreadsheetWithData(headers, pendingFileData.rows)
+      setShowHeaderDialog(false)
+      setPendingFileData(null)
+    }
+  }
+
+  const handleUseAlphabeticHeaders = () => {
+    if (pendingFileData) {
+      // Use A, B, C... as headers and include the numeric row as first data row
+      const numCols = pendingFileData.headers.length
+      const alphabeticHeaders = Array.from({ length: numCols }, (_, i) => 
+        String.fromCharCode(65 + i)
+      )
+      const rows = [pendingFileData.headers, ...pendingFileData.rows]
+      createSpreadsheetWithData(alphabeticHeaders, rows)
+      setShowHeaderDialog(false)
+      setPendingFileData(null)
     }
   }
 
@@ -192,8 +247,14 @@ export function VisualizationTab() {
   const handleDeleteColumn = () => {
     if (jspreadsheet) {
       const selected = jspreadsheet.getSelected()
-      if (selected) {
-        jspreadsheet.deleteColumn()
+      if (selected && selected.length > 0) {
+        // Get the column index from the selection
+        // selected format is [x1, y1, x2, y2]
+        const columnIndex = selected[0]
+        // Delete the column at the specified index
+        jspreadsheet.deleteColumn(1, columnIndex)
+      } else {
+        alert('Please select a column to delete by clicking on a cell in that column')
       }
     }
   }
@@ -211,6 +272,42 @@ export function VisualizationTab() {
 
   return (
     <div className="h-full flex flex-col bg-white">
+      {/* Header Dialog */}
+      <Dialog open={showHeaderDialog} onOpenChange={setShowHeaderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Column Headers Detected</DialogTitle>
+            <DialogDescription>
+              The first row of your dataset contains only numbers. Would you like to use them as column headers, or use default alphabetic headers (A, B, C, etc.)?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pendingFileData && (
+            <div className="py-4">
+              <p className="text-sm text-gray-600 mb-2">First row values:</p>
+              <div className="p-3 bg-gray-100 rounded-md font-mono text-sm">
+                {pendingFileData.headers.slice(0, 10).join(', ')}
+                {pendingFileData.headers.length > 10 && '...'}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleUseAlphabeticHeaders}
+            >
+              Use A, B, C... (Keep numeric row as data)
+            </Button>
+            <Button
+              onClick={handleUseNumericHeaders}
+            >
+              Use Numeric Values as Headers
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Toolbar */}
       <div className="border-b bg-gray-50 p-3 flex items-center gap-3 flex-shrink-0">
         <input
@@ -274,7 +371,7 @@ export function VisualizationTab() {
         </Button>
 
         <div className="ml-auto text-xs text-gray-500">
-          Excel-like Spreadsheet
+          Excel-like Spreadsheet • Click column headers to rename
         </div>
       </div>
 
