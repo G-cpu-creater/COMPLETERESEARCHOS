@@ -120,6 +120,7 @@ export default function ProjectDetailPage() {
           navigationItems={navigationItems}
           researchTools={researchTools}
           onOpenChange={setSidebarOpen}
+          projectId={projectId}
         />
 
         <SidebarToggle

@@ -2,6 +2,7 @@
 
 import { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
+import { FileManagerSection } from '@/components/files/FileManagerSection'
 
 interface NavigationItem {
   id: string
@@ -25,6 +26,7 @@ interface ProjectSidebarProps {
   navigationItems: NavigationItem[]
   researchTools: ResearchTool[]
   onOpenChange?: (open: boolean) => void
+  projectId: string
 }
 
 export function ProjectSidebar({
@@ -34,6 +36,7 @@ export function ProjectSidebar({
   navigationItems,
   researchTools,
   onOpenChange,
+  projectId,
 }: ProjectSidebarProps) {
   const [isHovering, setIsHovering] = useState(false)
 
@@ -110,6 +113,9 @@ export function ProjectSidebar({
                 </button>
               )
             })}
+          
+          {/* File Manager Section */}
+          <FileManagerSection projectId={projectId} />
           </div>
         </nav>
       </div>

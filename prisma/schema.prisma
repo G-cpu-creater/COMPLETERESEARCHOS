@@ -39,6 +39,7 @@ model Project {
   dataVersions       DataVersion[]
   datasets           Dataset[]
   exportRecords      ExportRecord[]
+  files              File[]
   folders            Folder[]
   labNotebookEntries LabNotebookEntry[]
   milestones         Milestone[]
@@ -392,4 +393,26 @@ model ChatSummary {
   project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("chat_summaries")
+}
+
+model File {
+  id         String   @id @default(uuid())
+  name       String
+  type       String // 'file' or 'folder'
+  extension  String? // file extension (e.g., 'pdf', 'png')
+  size       Int? // file size in bytes
+  url        String? // storage URL for files
+  parentId   String?  @map("parent_id")
+  projectId  String   @map("project_id")
+  isExpanded Boolean  @default(false) @map("is_expanded")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  parent   File?   @relation("FileHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children File[]  @relation("FileHierarchy")
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([parentId])
+  @@map("files")
 }
