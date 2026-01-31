@@ -51,28 +51,63 @@ export function PlotCard({ plot }: PlotCardProps) {
     const layout: any = {
       title: {
         text: `${plot.yVariable} vs ${plot.xVariable}`,
-        font: { size: 14 }
+        font: { size: 16, family: 'Arial, sans-serif' }
       },
+      plot_bgcolor: 'white',
+      paper_bgcolor: 'white',
+      width: plot.size.width,
+      height: plot.size.height,
       xaxis: {
-        title: { text: plot.xVariable },
+        title: {
+          text: plot.xVariable,
+          font: { size: 12, family: 'Arial, sans-serif' },
+        },
+        showline: true,
+        linecolor: '#000000',
+        linewidth: 2,
+        ticks: 'outside',
         showgrid: plot.showGrid,
         gridcolor: '#e5e5e5',
+        mirror: false,
+        zeroline: false,
+        nticks: 10,
       },
       yaxis: {
-        title: { text: plot.yVariable },
+        title: {
+          text: plot.yVariable,
+          font: { size: 12, family: 'Arial, sans-serif' },
+        },
+        showline: true,
+        linecolor: '#000000',
+        linewidth: 2,
+        ticks: 'outside',
         showgrid: plot.showGrid,
         gridcolor: '#e5e5e5',
+        mirror: false,
+        zeroline: false,
+        nticks: 10,
       },
       showlegend: plot.showLegend,
-      autosize: true,
-      margin: { l: 50, r: 20, t: 40, b: 40 },
+      legend: {
+        font: { size: 10 },
+        orientation: 'v',
+        x: 1,
+        y: 1,
+        xanchor: 'right',
+        yanchor: 'top',
+        bgcolor: 'rgba(255,255,255,0.8)',
+        bordercolor: '#cccccc',
+        borderwidth: 1,
+      },
+      autosize: false,
+      margin: { l: 60, r: 20, t: 60, b: 60 },
     }
 
     return {
       data: [trace],
       layout,
       config: {
-        responsive: true,
+        responsive: false,
         scrollZoom: true,
         displayModeBar: true,
         displaylogo: false,

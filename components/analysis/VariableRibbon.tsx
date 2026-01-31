@@ -20,7 +20,7 @@ export function VariableRibbon() {
   }
 
   return (
-    <div className="fixed right-0 top-0 w-64 h-full bg-gray-50 border-l border-gray-200 flex flex-col z-50">
+    <div className="fixed right-0 top-0 w-64 h-full bg-gray-50 border-l border-gray-200 flex flex-col z-30">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-2">

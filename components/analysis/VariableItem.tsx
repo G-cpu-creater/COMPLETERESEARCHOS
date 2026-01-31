@@ -27,19 +27,7 @@ export function VariableItem({ name, dataPreview }: VariableItemProps) {
       {...attributes}
       className="bg-white border border-gray-300 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-blue-500 hover:shadow-md transition-all"
     >
-      <div className="font-semibold text-sm text-gray-800 mb-1">{name}</div>
-      <div className="text-xs text-gray-500">
-        {dataPreview.slice(0, 3).map((val, i) => (
-          <span key={i}>
-            {val.toFixed(2)}
-            {i < 2 && ', '}
-          </span>
-        ))}
-        {dataPreview.length > 3 && '...'}
-      </div>
-      <div className="text-xs text-gray-400 mt-1">
-        {dataPreview.length} values
-      </div>
+      <div className="font-semibold text-sm text-gray-800">{name}</div>
     </div>
   )
 }

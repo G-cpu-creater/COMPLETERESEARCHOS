@@ -7,13 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   DataManagementTab,
   VisualizationTab,
-  AIInsightsTab,
 } from '@/components/LazyComponents'
 import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel'
 import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { LiteratureManager } from '@/components/literature/LiteratureManager'
 import { ExportPanel } from '@/components/export/ExportPanel'
-import { Users, BookOpen, FileText, Download, Home, BarChart3, Lightbulb, LineChart } from 'lucide-react'
+import { Users, BookOpen, FileText, Download, Home, BarChart3, LineChart } from 'lucide-react'
 import { NotesContainer } from '@/components/Notes/NotesContainer'
 import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
 import { SidebarToggle } from '@/components/navigation/SidebarToggle'
@@ -116,7 +115,6 @@ export default function ProjectDetailPage() {
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'visualization', label: 'Visualization', icon: BarChart3 },
     { id: 'analysis', label: 'Analysis', icon: LineChart },
-    { id: 'insights', label: 'Insights', icon: Lightbulb },
   ]
 
   return (
@@ -177,11 +175,6 @@ export default function ProjectDetailPage() {
         {/* Analysis Tab - NEW */}
         <TabsContent value="analysis">
           <AnalysisPage />
-        </TabsContent>
-
-        {/* Insights Tab - NEW */}
-        <TabsContent value="insights">
-          <AIInsightsTab />
         </TabsContent>
 
         {/* Research Tool Tabs (kept from original) */}
