@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import dynamic from 'next/dynamic'
 import { useDatasetStore } from '@/lib/stores/datasetStore'
+import { useVisualizationStore } from '@/lib/stores/visualizationStore'
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
@@ -42,25 +43,46 @@ export function VisualizationTab() {
     headers: any[]
     rows: any[][]
   } | null>(null)
-  const [selectedColumns, setSelectedColumns] = useState<number[]>([])
-  const [plotData, setPlotData] = useState<any>(null)
-  const [plotType, setPlotType] = useState<'scatter' | 'line' | 'bar' | 'scatter+line'>('scatter')
-  const [markerSize, setMarkerSize] = useState(8)
-  const [markerColor, setMarkerColor] = useState('#3b82f6')
-  const [xAxisTitle, setXAxisTitle] = useState('X Axis')
-  const [yAxisTitle, setYAxisTitle] = useState('Y Axis')
-  const [plotTitle, setPlotTitle] = useState('Data Plot')
-  const [showLegend, setShowLegend] = useState(true)
-  const [showGrid, setShowGrid] = useState(false)
-  const [fontSize, setFontSize] = useState(12)
-  const [fontBold, setFontBold] = useState(false)
-  const [fontItalic, setFontItalic] = useState(false)
-  const [fontUnderline, setFontUnderline] = useState(false)
-  const [xTickCount, setXTickCount] = useState<number>(10)
-  const [yTickCount, setYTickCount] = useState<number>(10)
   const [currentFilename, setCurrentFilename] = useState('')
   
   const { setDataset } = useDatasetStore()
+  const {
+    spreadsheetData,
+    headers: storedHeaders,
+    selectedColumns,
+    plotData,
+    plotType,
+    markerSize,
+    markerColor,
+    xAxisTitle,
+    yAxisTitle,
+    plotTitle,
+    showLegend,
+    showGrid,
+    fontSize,
+    fontBold,
+    fontItalic,
+    fontUnderline,
+    xTickCount,
+    yTickCount,
+    setSpreadsheetData,
+    setSelectedColumns,
+    setPlotData,
+    setPlotType,
+    setMarkerSize,
+    setMarkerColor,
+    setXAxisTitle,
+    setYAxisTitle,
+    setPlotTitle,
+    setShowLegend,
+    setShowGrid,
+    setFontSize,
+    setFontBold,
+    setFontItalic,
+    setFontUnderline,
+    setXTickCount,
+    setYTickCount,
+  } = useVisualizationStore()
 
   useEffect(() => {
     // Load Jspreadsheet CSS
@@ -103,29 +125,55 @@ export function VisualizationTab() {
     script.onload = () => {
       setIsLoading(false)
       if (spreadsheetRef.current && window.jspreadsheet) {
-        // Initialize with default empty spreadsheet
-        const table = window.jspreadsheet(spreadsheetRef.current, {
-          data: Array(20).fill(null).map(() => Array(26).fill('')),
-          columns: Array(26).fill(null).map((_, i) => ({
-            type: 'text',
-            title: String.fromCharCode(65 + i), // A-Z
-            width: 120
-          })),
-          minDimensions: [26, 20],
-          allowInsertRow: true,
-          allowInsertColumn: true,
-          allowDeleteRow: true,
-          allowDeleteColumn: true,
-          allowRenameColumn: true,
-          contextMenu: true,
-          tableOverflow: true,
-          tableHeight: '600px',
-          tableWidth: '100%',
-          onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-            updateSelectedColumns(instance, x1, y1, x2, y2)
-          },
-        })
-        setJspreadsheet(table)
+        // Restore from store if data exists, otherwise initialize empty
+        if (spreadsheetData && storedHeaders) {
+          const table = window.jspreadsheet(spreadsheetRef.current, {
+            data: spreadsheetData,
+            columns: storedHeaders.map((header) => ({
+              type: 'text',
+              title: String(header || ''),
+              width: 120
+            })),
+            minDimensions: [storedHeaders.length, Math.max(spreadsheetData.length, 20)],
+            allowInsertRow: true,
+            allowInsertColumn: true,
+            allowDeleteRow: true,
+            allowDeleteColumn: true,
+            allowRenameColumn: true,
+            contextMenu: true,
+            tableOverflow: true,
+            tableHeight: '600px',
+            tableWidth: '100%',
+            onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+              updateSelectedColumns(instance, x1, y1, x2, y2)
+            },
+          })
+          setJspreadsheet(table)
+        } else {
+          // Initialize with default empty spreadsheet
+          const table = window.jspreadsheet(spreadsheetRef.current, {
+            data: Array(20).fill(null).map(() => Array(26).fill('')),
+            columns: Array(26).fill(null).map((_, i) => ({
+              type: 'text',
+              title: String.fromCharCode(65 + i), // A-Z
+              width: 120
+            })),
+            minDimensions: [26, 20],
+            allowInsertRow: true,
+            allowInsertColumn: true,
+            allowDeleteRow: true,
+            allowDeleteColumn: true,
+            allowRenameColumn: true,
+            contextMenu: true,
+            tableOverflow: true,
+            tableHeight: '600px',
+            tableWidth: '100%',
+            onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
+              updateSelectedColumns(instance, x1, y1, x2, y2)
+            },
+          })
+          setJspreadsheet(table)
+        }
       }
     }
 
@@ -235,6 +283,9 @@ export function VisualizationTab() {
         },
       })
       setJspreadsheet(table)
+      
+      // Save to visualization store
+      setSpreadsheetData(rows, headers, currentFilename)
       
       // Save dataset to store for Analysis page
       saveDatasetToStore(headers, rows)
