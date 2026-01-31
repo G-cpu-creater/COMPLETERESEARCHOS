@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -18,16 +18,20 @@ import { SidebarToggle } from '@/components/navigation/SidebarToggle'
 import { ProjectAIChatProvider } from '@/lib/hooks/useProjectAIChat'
 import { ProjectAIChatSidebar } from '@/components/ai/ProjectAIChatSidebar'
 import { AnalysisPage } from '@/components/analysis/AnalysisPage'
-import Link from 'next/link'
-import { Home, ChevronRight } from 'lucide-react'
 
 export default function ProjectDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const projectId = params.id as string
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState('overview')
+  const activeView = searchParams.get('view') || 'overview'
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const setActiveView = (view: string) => {
+    router.push(`/projects/${projectId}?view=${view}`, { scroll: false })
+  }
 
   useEffect(() => {
     if (projectId) {
@@ -125,68 +129,7 @@ export default function ProjectDetailPage() {
 
         <div className="flex-1 transition-all duration-300 ml-0">
           <div className="h-full overflow-y-auto">
-            <div className="p-8 pt-6">
-              {/* Breadcrumbs with Navigation Buttons */}
-              <div className="flex items-center justify-between mb-6">
-                <nav className="flex items-center space-x-1 text-sm text-gray-600">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center hover:text-blue-600 transition-colors"
-                  >
-                    <Home className="h-4 w-4" />
-                  </Link>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                  <Link
-                    href="/projects"
-                    className="hover:text-blue-600 transition-colors"
-                  >
-                    Projects
-                  </Link>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium text-gray-900">
-                    Project Details
-                  </span>
-                </nav>
-
-                {/* Navigation Buttons */}
-                <div className="flex items-center gap-32">
-                  <button
-                    onClick={() => setActiveView('analysis')}
-                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      activeView === 'analysis'
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Analysis
-                  </button>
-
-                  <button
-                    onClick={() => setActiveView('visualization')}
-                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      activeView === 'visualization'
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Visualization
-                  </button>
-
-                  <button
-                    onClick={() => setActiveView('overview')}
-                    className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      activeView === 'overview'
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Overview
-                  </button>
-                </div>
-              </div>
-
-              <div className="-mx-8 -my-6 mt-6">
-                <div className="p-8">
+            <div className="p-8">
             {activeView === 'overview' && (
               <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
@@ -240,8 +183,6 @@ export default function ProjectDetailPage() {
           <ExportPanel projectId={projectId} projectTitle={project.title} />
         </TabsContent>
       </Tabs>
-              </div>
-            </div>
           </div>
         </div>
       </div>
