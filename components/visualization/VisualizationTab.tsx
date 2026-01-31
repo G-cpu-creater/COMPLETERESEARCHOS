@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Upload, Plus, Trash2 } from 'lucide-react'
+import { Upload, Plus, Trash2, BarChart3 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ declare global {
 export function VisualizationTab() {
   const spreadsheetRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dividerRef = useRef<HTMLDivElement>(null)
   const [jspreadsheet, setJspreadsheet] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showHeaderDialog, setShowHeaderDialog] = useState(false)
@@ -29,6 +30,8 @@ export function VisualizationTab() {
     headers: any[]
     rows: any[][]
   } | null>(null)
+  const [leftWidth, setLeftWidth] = useState(50) // Percentage
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     // Load Jspreadsheet CSS
@@ -251,6 +254,42 @@ export function VisualizationTab() {
     }
   }
 
+  // Handle resizable divider
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return
+      
+      const container = document.getElementById('split-container')
+      if (!container) return
+      
+      const containerRect = container.getBoundingClientRect()
+      const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+      
+      // Constrain between 20% and 80%
+      if (newLeftWidth >= 20 && newLeftWidth <= 80) {
+        setLeftWidth(newLeftWidth)
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging])
+
+  const handleDividerMouseDown = () => {
+    setIsDragging(true)
+  }
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -367,9 +406,45 @@ export function VisualizationTab() {
         </div>
       </div>
 
-      {/* Spreadsheet Container */}
-      <div className="flex-1 overflow-auto p-4">
-        <div ref={spreadsheetRef} />
+      {/* Split Container */}
+      <div id="split-container" className="flex-1 flex overflow-hidden">
+        {/* Left Panel - Spreadsheet */}
+        <div 
+          className="overflow-auto border-r"
+          style={{ width: `${leftWidth}%` }}
+        >
+          <div className="p-4">
+            <div ref={spreadsheetRef} />
+          </div>
+        </div>
+
+        {/* Resizable Divider */}
+        <div
+          ref={dividerRef}
+          className="w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize transition-colors relative group"
+          onMouseDown={handleDividerMouseDown}
+          style={{ userSelect: 'none' }}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1" />
+        </div>
+
+        {/* Right Panel - Plot Visualization */}
+        <div 
+          className="overflow-auto bg-gray-50"
+          style={{ width: `${100 - leftWidth}%` }}
+        >
+          <div className="h-full flex items-center justify-center p-8">
+            <div className="text-center">
+              <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                Plots are ready to be created
+              </h3>
+              <p className="text-sm text-gray-500">
+                Select data from the spreadsheet to generate visualizations
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
