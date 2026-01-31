@@ -171,9 +171,9 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="p-8 pt-6">
+        <div className="px-8 pt-[15px] pb-[10px]">
           <Breadcrumbs />
-          <div className="-mx-8 -my-6">
+          <div className="-mx-8 -my-[10px]">
             {children}
           </div>
         </div>
