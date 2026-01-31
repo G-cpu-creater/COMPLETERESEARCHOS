@@ -460,15 +460,17 @@ export function VisualizationTab() {
             </div>
           )}
           
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={handleUseAlphabeticHeaders}
+              className="w-full whitespace-normal h-auto py-3"
             >
               Use A, B, C... (Keep numeric row as data)
             </Button>
             <Button
               onClick={handleUseNumericHeaders}
+              className="w-full whitespace-normal h-auto py-3"
             >
               Use Numeric Values as Headers
             </Button>
