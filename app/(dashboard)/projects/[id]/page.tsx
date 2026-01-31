@@ -10,9 +10,8 @@ import {
 } from '@/components/LazyComponents'
 import { CollaborationPanel } from '@/components/collaboration/CollaborationPanel'
 import { LabNotebook } from '@/components/notebook/LabNotebook'
-import { LiteratureManager } from '@/components/literature/LiteratureManager'
 import { ExportPanel } from '@/components/export/ExportPanel'
-import { Users, BookOpen, FileText, Download, Home, BarChart3, LineChart } from 'lucide-react'
+import { Users, BookOpen, Download, Home, BarChart3, LineChart } from 'lucide-react'
 import { NotesContainer } from '@/components/Notes/NotesContainer'
 import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
 import { SidebarToggle } from '@/components/navigation/SidebarToggle'
@@ -75,7 +74,7 @@ export default function ProjectDetailPage() {
   // Find Overview Page (first page or specific title)
   const overviewPage = project.pages?.[0]
 
-  // Research Tools - Keep only: Team Collaboration, Export & Publish, Lab Notebook, Literature
+  // Research Tools
   const researchTools = [
     {
       id: 'collaboration',
@@ -100,14 +99,6 @@ export default function ProjectDetailPage() {
       icon: BookOpen,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
-    },
-    {
-      id: 'literature',
-      title: 'Literature',
-      description: 'Manage papers and citations',
-      icon: FileText,
-      iconBg: 'bg-purple-50',
-      iconColor: 'text-purple-600',
     },
   ]
 
@@ -184,10 +175,6 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="notebook">
           <LabNotebook projectId={projectId} />
-        </TabsContent>
-
-        <TabsContent value="literature">
-          <LiteratureManager projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="export">
