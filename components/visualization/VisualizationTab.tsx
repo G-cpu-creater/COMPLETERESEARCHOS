@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import dynamic from 'next/dynamic'
+import { useDatasetStore } from '@/lib/stores/datasetStore'
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
@@ -57,6 +58,9 @@ export function VisualizationTab() {
   const [fontUnderline, setFontUnderline] = useState(false)
   const [xTickCount, setXTickCount] = useState<number>(10)
   const [yTickCount, setYTickCount] = useState<number>(10)
+  const [currentFilename, setCurrentFilename] = useState('')
+  
+  const { setDataset } = useDatasetStore()
 
   useEffect(() => {
     // Load Jspreadsheet CSS
@@ -140,6 +144,8 @@ export function VisualizationTab() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !window.XLSX) return
+
+    setCurrentFilename(file.name)
 
     try {
       const reader = new FileReader()
@@ -229,7 +235,34 @@ export function VisualizationTab() {
         },
       })
       setJspreadsheet(table)
+      
+      // Save dataset to store for Analysis page
+      saveDatasetToStore(headers, rows)
     }
+  }
+
+  const saveDatasetToStore = (headers: any[], rows: any[][]) => {
+    // Convert spreadsheet data to dataset format
+    const data: Record<string, number[]> = {}
+    
+    headers.forEach((header, colIndex) => {
+      data[String(header)] = rows.map(row => {
+        const val = row[colIndex]
+        return val !== null && val !== undefined && val !== '' 
+          ? parseFloat(String(val)) 
+          : 0
+      }).filter(v => !isNaN(v))
+    })
+    
+    const indexArray = Array.from({ length: rows.length }, (_, i) => i)
+    
+    setDataset({
+      filename: currentFilename,
+      headers: headers.map(h => String(h)),
+      data,
+      indexArray,
+      uploadedAt: Date.now()
+    })
   }
 
   const handleUseNumericHeaders = () => {

@@ -13,12 +13,13 @@ import { CollaborationPanel } from '@/components/collaboration/CollaborationPane
 import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { LiteratureManager } from '@/components/literature/LiteratureManager'
 import { ExportPanel } from '@/components/export/ExportPanel'
-import { Users, BookOpen, FileText, Download, Home, BarChart3, Lightbulb } from 'lucide-react'
+import { Users, BookOpen, FileText, Download, Home, BarChart3, Lightbulb, LineChart } from 'lucide-react'
 import { NotesContainer } from '@/components/Notes/NotesContainer'
 import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
 import { SidebarToggle } from '@/components/navigation/SidebarToggle'
 import { ProjectAIChatProvider } from '@/lib/hooks/useProjectAIChat'
 import { ProjectAIChatSidebar } from '@/components/ai/ProjectAIChatSidebar'
+import { AnalysisPage } from '@/components/analysis/AnalysisPage'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -114,6 +115,7 @@ export default function ProjectDetailPage() {
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'visualization', label: 'Visualization', icon: BarChart3 },
+    { id: 'analysis', label: 'Analysis', icon: LineChart },
     { id: 'insights', label: 'Insights', icon: Lightbulb },
   ]
 
@@ -170,6 +172,11 @@ export default function ProjectDetailPage() {
         {/* Visualization Tab - NEW */}
         <TabsContent value="visualization">
           <VisualizationTab />
+        </TabsContent>
+
+        {/* Analysis Tab - NEW */}
+        <TabsContent value="analysis">
+          <AnalysisPage />
         </TabsContent>
 
         {/* Insights Tab - NEW */}
