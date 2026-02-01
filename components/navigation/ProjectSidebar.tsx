@@ -65,30 +65,10 @@ export function ProjectSidebar({
     >
       <div className="flex flex-col h-full overflow-hidden">
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Main Sections
-          </div>
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeView === item.id
-            const btnBaseClasses = 'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all'
-            const btnActiveClasses = isActive
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-700 hover:bg-gray-100'
-            const buttonClasses = btnBaseClasses + ' ' + btnActiveClasses
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={buttonClasses}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="font-medium">{item.label}</span>
-              </button>
-            )
-          })}
-
+          {/* File Manager Section - First */}
+          <FileManagerSection projectId={projectId} />
+          
+          {/* Research Tools - Moved to bottom */}
           <div className="pt-6 mt-6 border-t">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Research Tools
@@ -113,9 +93,6 @@ export function ProjectSidebar({
                 </button>
               )
             })}
-          
-          {/* File Manager Section */}
-          <FileManagerSection projectId={projectId} />
           </div>
         </nav>
       </div>
