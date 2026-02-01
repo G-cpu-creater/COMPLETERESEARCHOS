@@ -11,11 +11,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         type: 'folder',
         projectId: params.id,
         parentId: parentId || null,
+        extension: null,
+        size: null,
+        url: null,
+        isExpanded: false,
       },
     })
     
     return NextResponse.json(folder, { status: 201 })
   } catch (error) {
+    console.error('Failed to create folder:', error)
     return NextResponse.json({ error: 'Failed to create folder' }, { status: 500 })
   }
 }
