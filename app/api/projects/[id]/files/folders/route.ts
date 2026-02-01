@@ -5,6 +5,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   try {
     const { name, parentId } = await req.json()
     
+    console.log('Creating folder:', { name, parentId, projectId: params.id })
+    
     const folder = await prisma.file.create({
       data: {
         name,
@@ -17,6 +19,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         isExpanded: false,
       },
     })
+    
+    console.log('Folder created:', folder)
     
     return NextResponse.json(folder, { status: 201 })
   } catch (error) {

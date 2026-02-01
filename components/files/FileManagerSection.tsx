@@ -47,7 +47,10 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
       const res = await fetch(`/api/projects/${projectId}/files`)
       if (res.ok) {
         const files = await res.json()
+        console.log('Fetched files:', files)
         setNodes(files)
+      } else {
+        console.error('Failed to fetch files, status:', res.status)
       }
     } catch (error) {
       console.error('Failed to fetch files:', error)
@@ -58,6 +61,7 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
     if (!folderName.trim()) return
     
     const parentId = selectedNode?.type === 'folder' ? selectedNode.id : null
+    console.log('Creating folder:', folderName, 'parentId:', parentId)
     await createFolder(folderName.trim(), parentId)
     setFolderName('')
     setShowFolderDialog(false)
@@ -87,6 +91,11 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
   const rootItems = Object.values(nodes).filter(node => !node.parentId)
   const rootFolders = rootItems.filter(n => n.type === 'folder').sort((a, b) => a.name.localeCompare(b.name))
   const rootFiles = rootItems.filter(n => n.type === 'file').sort((a, b) => a.name.localeCompare(b.name))
+  
+  console.log('Nodes:', nodes)
+  console.log('Root items:', rootItems)
+  console.log('Root folders:', rootFolders)
+  console.log('Root files:', rootFiles)
   
   return (
     <div className="border-t mt-4">
