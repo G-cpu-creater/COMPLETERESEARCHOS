@@ -42,7 +42,7 @@ export function PageManagerSection({ projectId }: PageManagerSectionProps) {
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Pages
+          Editor
         </div>
         <button
           onClick={() => setIsCreating(true)}

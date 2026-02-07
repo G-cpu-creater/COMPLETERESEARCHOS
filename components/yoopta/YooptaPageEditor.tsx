@@ -41,7 +41,7 @@ interface YooptaPageEditorProps {
 async function uploadFile(file: globalThis.File) {
   const formData = new FormData()
   formData.append('file', file)
-  const res = await fetch('/api/upload/local', { method: 'POST', body: formData })
+  const res = await fetch('/api/upload', { method: 'POST', body: formData })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Upload failed')
   return data
