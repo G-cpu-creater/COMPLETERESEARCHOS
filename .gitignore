@@ -7,3 +7,4 @@ firebase-debug.log
 *.bak3
 .copilot-memory.md
 external-libs/
+.vercel
