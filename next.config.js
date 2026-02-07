@@ -1,4 +1,4 @@
-﻿/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const path = require('path');
 
 const nextConfig = {
@@ -6,29 +6,15 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '100mb',
     },
-    // Optimize bundle size
     optimizePackageImports: ['lucide-react', 'date-fns'],
   },
-  // Enable compression for Vercel
-  compress: true,
-  // Production optimizations
-  swcMinify: true,
   poweredByHeader: false,
   webpack: (config, { isServer }) => {
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
-
-    // Add explicit path aliases for Vercel compatibility
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname),
     };
-
-    // Tree-shaking optimization
-    config.optimization = {
-      ...config.optimization,
-      usedExports: true,
-    };
-
     return config;
   },
   images: {
@@ -42,13 +28,18 @@ const nextConfig = {
         hostname: '**.amazonaws.com',
       },
     ],
-    // Enable image optimization
     formats: ['image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200],
-    imageSizes: [16, 32, 48, 64, 96],
   },
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
       {
         source: '/api/:path*',
         headers: [
@@ -56,26 +47,6 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PATCH,DELETE,OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ],
-      },
-      {
-        // Cache static assets aggressively
-        source: '/:path*.{jpg,jpeg,png,gif,ico,svg,webp}',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache JS/CSS
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
         ],
       },
     ];

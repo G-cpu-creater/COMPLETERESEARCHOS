@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs'
 import {
   DataManagementTab,
   VisualizationTab,
@@ -12,12 +12,13 @@ import { CollaborationPanel } from '@/components/collaboration/CollaborationPane
 import { LabNotebook } from '@/components/notebook/LabNotebook'
 import { ExportPanel } from '@/components/export/ExportPanel'
 import { Users, BookOpen, Download } from 'lucide-react'
-import { NotesContainer } from '@/components/Notes/NotesContainer'
 import { ProjectSidebar } from '@/components/navigation/ProjectSidebar'
 import { SidebarToggle } from '@/components/navigation/SidebarToggle'
 import { ProjectAIChatProvider } from '@/lib/hooks/useProjectAIChat'
 import { ProjectAIChatSidebar } from '@/components/ai/ProjectAIChatSidebar'
 import { AnalysisPage } from '@/components/analysis/AnalysisPage'
+import { SplitEditorView } from '@/components/pages/SplitEditorView'
+import { usePageStore } from '@/lib/stores/pageStore'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -33,11 +34,33 @@ export default function ProjectDetailPage() {
     router.push(`/projects/${projectId}?view=${view}`, { scroll: false })
   }
 
+  const setStoreProjectId = usePageStore((s) => s.setProjectId)
+  const loadPages = usePageStore((s) => s.loadPages)
+  const selectedPageId = usePageStore((s) => s.selectedPageId)
+  const selectPage = usePageStore((s) => s.selectPage)
+  const pages = usePageStore((s) => s.pages)
+
   useEffect(() => {
     if (projectId) {
       fetchProject()
+      setStoreProjectId(projectId)
     }
   }, [projectId])
+
+  // Load pages when projectId is set
+  useEffect(() => {
+    if (projectId) {
+      loadPages()
+    }
+  }, [projectId, loadPages])
+
+  // Auto-select first page if none selected
+  useEffect(() => {
+    if (!selectedPageId && Object.keys(pages).length > 0) {
+      const sorted = Object.values(pages).sort((a, b) => a.position - b.position)
+      selectPage(sorted[0].id)
+    }
+  }, [pages, selectedPageId, selectPage])
 
   const fetchProject = async () => {
     try {
@@ -76,9 +99,6 @@ export default function ProjectDetailPage() {
       </div>
     )
   }
-
-  // Find Overview Page (first page or specific title)
-  const overviewPage = project.pages?.[0]
 
   // Research Tools
   const researchTools = [
@@ -131,67 +151,52 @@ export default function ProjectDetailPage() {
         <div className="flex-1 transition-all duration-300 ml-0">
           <div className="h-full overflow-y-auto">
             <div className="p-8">
-            {activeView === 'overview' && (
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
-              </div>
-            )}
+              {activeView === 'overview' && (
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
+                </div>
+              )}
 
-            <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-              <TabsList className="hidden"></TabsList>
+              <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
+                <TabsList className="hidden"></TabsList>
 
-        {/* Overview Tab - Notes Container */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Notes Container (Jupyter-style blocks) */}
-          {overviewPage ? (
-            <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-              <div className="p-4 border-b bg-gray-50">
-                <h2 className="text-lg font-semibold text-gray-800">Research Notes</h2>
-              </div>
-              <div className="h-[800px]">
-                <NotesContainer noteId={overviewPage.id} />
-              </div>
+                {/* Overview Tab - Multi-page Editor */}
+                <TabsContent value="overview" className="space-y-6">
+                  <div className="bg-white rounded-xl border shadow-sm overflow-hidden" style={{ minHeight: 'calc(100vh - 220px)' }}>
+                    <SplitEditorView projectId={projectId} />
+                  </div>
+                </TabsContent>
+
+                {/* Visualization Tab */}
+                <TabsContent value="visualization">
+                  <VisualizationTab />
+                </TabsContent>
+
+                {/* Analysis Tab */}
+                <TabsContent value="analysis">
+                  <AnalysisPage />
+                </TabsContent>
+
+                {/* Research Tool Tabs */}
+                <TabsContent value="collaboration">
+                  <CollaborationPanel projectId={projectId} />
+                </TabsContent>
+
+                <TabsContent value="notebook">
+                  <LabNotebook projectId={projectId} />
+                </TabsContent>
+
+                <TabsContent value="export">
+                  <ExportPanel projectId={projectId} projectTitle={project.title} />
+                </TabsContent>
+              </Tabs>
             </div>
-          ) : (
-            <Card>
-              <CardContent className="py-8 text-center text-gray-500">
-                No overview page found for this project.
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Visualization Tab - NEW */}
-        <TabsContent value="visualization">
-          <VisualizationTab />
-        </TabsContent>
-
-        {/* Analysis Tab - NEW */}
-        <TabsContent value="analysis">
-          <AnalysisPage />
-        </TabsContent>
-
-        {/* Research Tool Tabs (kept from original) */}
-        <TabsContent value="collaboration">
-          <CollaborationPanel projectId={projectId} />
-        </TabsContent>
-
-        <TabsContent value="notebook">
-          <LabNotebook projectId={projectId} />
-        </TabsContent>
-
-        <TabsContent value="export">
-          <ExportPanel projectId={projectId} projectTitle={project.title} />
-        </TabsContent>
-      </Tabs>
           </div>
         </div>
+
+        {/* AI Chat Sidebar - accessible from all tabs */}
+        <ProjectAIChatSidebar projectId={projectId} />
       </div>
-      
-      {/* AI Chat Sidebar - accessible from all tabs */}
-      <ProjectAIChatSidebar projectId={projectId} />
-    </div>
     </ProjectAIChatProvider>
   )
 }
-

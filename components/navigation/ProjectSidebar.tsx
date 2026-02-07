@@ -65,7 +65,7 @@ export function ProjectSidebar({
     >
       <div className="flex flex-col h-full overflow-hidden">
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {/* File Manager Section - First */}
+          {/* File Manager Section */}
           <FileManagerSection projectId={projectId} />
           
           {/* Research Tools - Moved to bottom */}
