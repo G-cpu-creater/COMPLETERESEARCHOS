@@ -134,7 +134,6 @@ export default function ProjectDetailPage() {
     <ProjectAIChatProvider projectId={projectId}>
       <div className="flex h-screen overflow-hidden bg-gray-50">
         <ProjectSidebar
-          isOpen={sidebarOpen}
           activeView={activeView}
           onViewChange={setActiveView}
           navigationItems={navigationItems}
@@ -150,7 +149,8 @@ export default function ProjectDetailPage() {
             transitionDuration: sidebarResizing ? '0ms' : '200ms',
           }}
         >
-          <div className="h-full
+          <div className="h-full">
+            <div className="p-8">
               {activeView === 'overview' && (
                 <div className="mb-8">
                   <h1 className="text-3xl font-bold mb-2">{project.title}</h1>
