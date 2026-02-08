@@ -255,11 +255,14 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
     nodes,
     setProjectId,
     setNodes,
+    addFile,
     isLoading,
   } = useFileManagerStore()
 
   const treeRef = useRef<TreeApi<ArboristNode> | null>(null)
+  const rootFileInputRef = useRef<HTMLInputElement>(null)
   const [dndRoot, setDndRoot] = useState<globalThis.Node | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     // Set dndRootElement to document.body so DnD works inside fixed sidebar
@@ -280,6 +283,33 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
       }
     } catch (error) {
       console.error('Failed to fetch files:', error)
+    }
+  }
+
+  const handleRootUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    const formData = new FormData()
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i])
+    }
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/files/upload`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (res.ok) {
+        const uploadedFiles = await res.json()
+        uploadedFiles.forEach((file: any) => addFile(file))
+      }
+    } catch (error) {
+      console.error('Root upload failed:', error)
+    } finally {
+      setUploading(false)
+      if (rootFileInputRef.current) rootFileInputRef.current.value = ''
     }
   }
 
@@ -373,14 +403,36 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
         <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Files
         </div>
-        <button
-          onClick={handleCreateFolder}
-          className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700"
-          title="New folder"
-        >
-          <FolderPlus className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => rootFileInputRef.current?.click()}
+            className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700"
+            title="Upload files"
+            disabled={uploading}
+          >
+            <FilePlus className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleCreateFolder}
+            className="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700"
+            title="New folder"
+          >
+            <FolderPlus className="h-4 w-4" />
+          </button>
+          <input
+            ref={rootFileInputRef}
+            type="file"
+            multiple
+            onChange={handleRootUpload}
+            className="hidden"
+          />
+        </div>
       </div>
+
+      {/* Upload indicator */}
+      {uploading && (
+        <div className="text-xs text-blue-500 mb-2 text-center">Uploading...</div>
+      )}
 
       {/* Tree */}
       {isLoading ? (
@@ -389,12 +441,21 @@ export function FileManagerSection({ projectId }: FileManagerSectionProps) {
         <div className="text-center py-6">
           <FolderOpen className="h-10 w-10 text-gray-200 mx-auto mb-2" />
           <p className="text-xs text-gray-400">No files yet</p>
-          <button
-            onClick={handleCreateFolder}
-            className="text-xs text-blue-500 hover:text-blue-700 mt-1"
-          >
-            Create a folder
-          </button>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <button
+              onClick={() => rootFileInputRef.current?.click()}
+              className="text-xs text-blue-500 hover:text-blue-700"
+            >
+              Upload files
+            </button>
+            <span className="text-xs text-gray-300">|</span>
+            <button
+              onClick={handleCreateFolder}
+              className="text-xs text-blue-500 hover:text-blue-700"
+            >
+              Create a folder
+            </button>
+          </div>
         </div>
       ) : (
         <Tree<ArboristNode>
