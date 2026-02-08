@@ -13,6 +13,17 @@ model User {
   name          String?
   passwordHash  String           @map("password_hash")
   avatarUrl     String?          @map("avatar_url")
+  institution   String?
+  department    String?
+  role          String?
+  researchArea  String?          @map("research_area")
+  country       String?
+  state         String?
+  city          String?
+  orcidId       String?          @map("orcid_id")
+  emailVerified Boolean          @default(false) @map("email_verified")
+  verifyCode    String?          @map("verify_code")
+  verifyExpiry  DateTime?        @map("verify_expiry")
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
   conversations AIConversation[]

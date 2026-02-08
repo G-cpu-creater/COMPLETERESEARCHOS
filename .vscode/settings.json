@@ -1,3 +1,28 @@
 {
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.profiles.linux": {
+        "zsh": {
+            "path": "/usr/bin/zsh",
+            "args": ["-l"]
+        },
+        "bash": {
+            "path": "/usr/bin/bash",
+            "args": ["-l"]
+        }
+    },
+    "terminal.integrated.inheritEnv": true,
+    "terminal.integrated.enablePersistentSessions": true,
+    "terminal.integrated.confirmOnExit": "always",
+    "terminal.integrated.confirmOnKill": "always",
+    "terminal.integrated.showExitAlert": true,
+    "terminal.integrated.shellArgs.linux": [],
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.next/**": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true
 }
