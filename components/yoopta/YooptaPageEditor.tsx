@@ -67,14 +67,9 @@ const TOOLS = {
 export function YooptaPageEditor({ pageId, projectId }: YooptaPageEditorProps) {
   const editor = useMemo(() => createYooptaEditor(), [])
   const [value, setValue] = useState<YooptaContentValue | undefined>(undefined)
-  const [saving, setSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const currentPageIdRef = useRef<string>(pageId)
-
-  const pages = usePageStore((s) => s.pages)
-  const pageTitle = pages[pageId]?.title || 'Untitled'
 
   const plugins = useMemo(() => [
     Paragraph,
@@ -154,19 +149,13 @@ export function YooptaPageEditor({ pageId, projectId }: YooptaPageEditorProps) {
   const saveContent = useCallback(
     async (content: YooptaContentValue) => {
       try {
-        setSaving(true)
         const res = await fetch(`/api/projects/${projectId}/pages/${pageId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content }),
         })
-        if (res.ok) {
-          setLastSaved(new Date())
-        }
       } catch (error) {
         console.error('Failed to save:', error)
-      } finally {
-        setSaving(false)
       }
     },
     [projectId, pageId]
@@ -202,24 +191,6 @@ export function YooptaPageEditor({ pageId, projectId }: YooptaPageEditorProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Page header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b bg-gray-50">
-        <div className="text-sm font-medium text-gray-700 truncate">{pageTitle}</div>
-        <div className="flex items-center gap-3">
-          {saving && (
-            <span className="text-xs text-blue-600 flex items-center gap-1">
-              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-blue-600 border-r-transparent" />
-              Saving...
-            </span>
-          )}
-          {lastSaved && !saving && (
-            <span className="text-xs text-green-600">
-              Saved {lastSaved.toLocaleTimeString()}
-            </span>
-          )}
-        </div>
-      </div>
-
       {/* Editor with constrained width */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-[900px] mx-auto">

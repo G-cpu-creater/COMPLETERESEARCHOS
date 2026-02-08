@@ -17,6 +17,8 @@ export function SplitEditorView({ projectId }: SplitEditorViewProps) {
   const setSplitPageId = usePageStore((s) => s.setSplitPageId)
 
   const pageList = Object.values(pages).sort((a, b) => a.position - b.position)
+  const selectedPage = selectedPageId ? pages[selectedPageId] : null
+  const splitPage = splitPageId ? pages[splitPageId] : null
 
   if (!selectedPageId) {
     return (
@@ -45,8 +47,21 @@ export function SplitEditorView({ projectId }: SplitEditorViewProps) {
 
   return (
     <div className="flex flex-col h-full min-h-[700px]">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end px-4 py-2 border-b bg-white">
+      {/* Toolbar with Page Title */}
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-white">
+        <div className="flex items-center gap-4">
+          <h2 className="text-sm font-medium text-gray-700 truncate">
+            {selectedPage?.title || 'Untitled'}
+          </h2>
+          {isSplit && splitPage && (
+            <>
+              <span className="text-gray-300">|</span>
+              <h2 className="text-sm font-medium text-gray-700 truncate">
+                {splitPage.title}
+              </h2>
+            </>
+          )}
+        </div>
         <button
           onClick={toggleSplit}
           className={
