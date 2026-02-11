@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Upload, Plus, Trash2, BarChart3, TrendingUp } from 'lucide-react'
+import { Upload, BarChart3 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -23,20 +23,24 @@ import { Label } from '@/components/ui/label'
 import dynamic from 'next/dynamic'
 import { useDatasetStore } from '@/lib/stores/datasetStore'
 import { useVisualizationStore } from '@/lib/stores/visualizationStore'
+import {
+  convertToXSpreadsheetFormat,
+  convertFromXSpreadsheetFormat,
+} from '@/lib/utils/spreadsheet-converter'
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 
 declare global {
   interface Window {
-    jspreadsheet: any
     XLSX: any
+    x_spreadsheet: any
   }
 }
 
 export function VisualizationTab() {
   const spreadsheetRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [jspreadsheet, setJspreadsheet] = useState<any>(null)
+  const [spreadsheet, setSpreadsheet] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showHeaderDialog, setShowHeaderDialog] = useState(false)
   const [pendingFileData, setPendingFileData] = useState<{
@@ -84,134 +88,138 @@ export function VisualizationTab() {
     setYTickCount,
   } = useVisualizationStore()
 
+  // Load XLSX library from CDN
   useEffect(() => {
-    // Load Jspreadsheet CSS
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = 'https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.1/dist/jspreadsheet.min.css'
-    document.head.appendChild(link)
-
-    // Load Jsuites CSS (required dependency)
-    const jsuitesLink = document.createElement('link')
-    jsuitesLink.rel = 'stylesheet'
-    jsuitesLink.href = 'https://cdn.jsdelivr.net/npm/jsuites@4.15.0/dist/jsuites.min.css'
-    document.head.appendChild(jsuitesLink)
-
-    // Load XLSX library from CDN
     const xlsxScript = document.createElement('script')
     xlsxScript.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
     xlsxScript.async = true
 
-    // Load Jsuites JS
-    const jsuitesScript = document.createElement('script')
-    jsuitesScript.src = 'https://cdn.jsdelivr.net/npm/jsuites@4.15.0/dist/jsuites.min.js'
-    jsuitesScript.async = true
+    xlsxScript.onload = () => {
+      // Load x-spreadsheet CSS
+      const xsCSS = document.createElement('link')
+      xsCSS.rel = 'stylesheet'
+      xsCSS.href = 'https://unpkg.com/x-data-spreadsheet@1.1.9/dist/xspreadsheet.css'
+      document.head.appendChild(xsCSS)
 
-    // Load Jspreadsheet JS after Jsuites
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.1/dist/index.min.js'
-    script.async = true
+      // Load x-spreadsheet JS
+      const xsScript = document.createElement('script')
+      xsScript.src = 'https://unpkg.com/x-data-spreadsheet@1.1.9/dist/xspreadsheet.js'
+      xsScript.async = true
+      
+      xsScript.onload = () => {
+        setIsLoading(false)
+      }
+      
+      document.head.appendChild(xsScript)
+    }
 
     document.head.appendChild(xlsxScript)
-    
-    xlsxScript.onload = () => {
-      document.head.appendChild(jsuitesScript)
-    }
-
-    jsuitesScript.onload = () => {
-      document.head.appendChild(script)
-    }
-
-    script.onload = () => {
-      setIsLoading(false)
-      if (spreadsheetRef.current && window.jspreadsheet) {
-        // Restore from store if data exists, otherwise initialize empty
-        if (spreadsheetData && storedHeaders) {
-          const table = window.jspreadsheet(spreadsheetRef.current, {
-            data: spreadsheetData,
-            columns: storedHeaders.map((header) => ({
-              type: 'text',
-              title: String(header || ''),
-              width: 120
-            })),
-            minDimensions: [storedHeaders.length, Math.max(spreadsheetData.length, 20)],
-            allowInsertRow: true,
-            allowInsertColumn: true,
-            allowDeleteRow: true,
-            allowDeleteColumn: true,
-            allowRenameColumn: true,
-            contextMenu: true,
-            tableOverflow: true,
-            tableHeight: '600px',
-            tableWidth: '100%',
-            onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-              updateSelectedColumns(instance, x1, y1, x2, y2)
-            },
-          })
-          setJspreadsheet(table)
-        } else {
-          // Initialize with default empty spreadsheet
-          const table = window.jspreadsheet(spreadsheetRef.current, {
-            data: Array(20).fill(null).map(() => Array(26).fill('')),
-            columns: Array(26).fill(null).map((_, i) => ({
-              type: 'text',
-              title: String.fromCharCode(65 + i), // A-Z
-              width: 120
-            })),
-            minDimensions: [26, 20],
-            allowInsertRow: true,
-            allowInsertColumn: true,
-            allowDeleteRow: true,
-            allowDeleteColumn: true,
-            allowRenameColumn: true,
-            contextMenu: true,
-            tableOverflow: true,
-            tableHeight: '600px',
-            tableWidth: '100%',
-            onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-              updateSelectedColumns(instance, x1, y1, x2, y2)
-            },
-          })
-          setJspreadsheet(table)
-        }
-      }
-    }
 
     return () => {
-      // Don't destroy on unmount - keep the instance for when we come back
+      // Cleanup if needed
     }
   }, [])
 
-  // Separate effect to restore spreadsheet when component mounts and store has data
+  // Initialize x-spreadsheet
   useEffect(() => {
-    if (!isLoading && window.jspreadsheet && spreadsheetRef.current && !jspreadsheet) {
-      // Restore from store if data exists
-      if (spreadsheetData && storedHeaders && spreadsheetData.length > 0) {
-        const table = window.jspreadsheet(spreadsheetRef.current, {
-          data: spreadsheetData,
-          columns: storedHeaders.map((header) => ({
-            type: 'text',
-            title: String(header || ''),
-            width: 120
-          })),
-          minDimensions: [storedHeaders.length, Math.max(spreadsheetData.length, 20)],
-          allowInsertRow: true,
-          allowInsertColumn: true,
-          allowDeleteRow: true,
-          allowDeleteColumn: true,
-          allowRenameColumn: true,
-          contextMenu: true,
-          tableOverflow: true,
-          tableHeight: '600px',
-          tableWidth: '100%',
-          onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-            updateSelectedColumns(instance, x1, y1, x2, y2)
+    if (isLoading || !spreadsheetRef.current || spreadsheet || !window.x_spreadsheet) return
+
+    // Initialize x-spreadsheet from CDN
+    const initSpreadsheet = () => {
+      try {
+        // Add custom CSS
+        const customCSS = document.createElement('style')
+        customCSS.textContent = `
+          .x-spreadsheet {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+          }
+          .x-spreadsheet-sheet {
+            border: none;
+            border-radius: 0;
+          }
+          .x-spreadsheet-bottombar {
+            display: none !important;
+          }
+          .x-spreadsheet-selector {
+            border: 2px solid #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1);
+          }
+          .x-spreadsheet-selector-corner {
+            background-color: #3b82f6 !important;
+          }
+          #xspreadsheet-vis-tab {
+            width: 100%;
+            height: 100%;
+          }
+        `
+        document.head.appendChild(customCSS)
+        
+        const Spreadsheet = window.x_spreadsheet
+        
+        // Set container ID
+        const containerId = 'xspreadsheet-vis-tab'
+        if (spreadsheetRef.current) {
+          spreadsheetRef.current.id = containerId
+        }
+
+        // Initialize x-spreadsheet
+        const xs = new Spreadsheet(`#${containerId}`, {
+          mode: 'edit',
+          showToolbar: true,
+          showGrid: true,
+          showContextmenu: true,
+          showBottomBar: false,
+          view: {
+            height: () => spreadsheetRef.current?.clientHeight || 600,
+            width: () => spreadsheetRef.current?.clientWidth || 800,
+          },
+          row: {
+            len: 100,
+            height: 25,
+          },
+          col: {
+            len: 26,
+            width: 120,
+            indexWidth: 60,
+            minWidth: 60,
           },
         })
-        setJspreadsheet(table)
+
+        // Load data if available from store
+        if (spreadsheetData && storedHeaders && spreadsheetData.length > 0) {
+          const xsData = convertToXSpreadsheetFormat(spreadsheetData, storedHeaders)
+          xs.loadData([xsData])
+        } else {
+          // Initialize with empty data
+          const defaultHeaders = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
+          const defaultData = Array(20).fill(null).map(() => Array(26).fill(''))
+          const xsData = convertToXSpreadsheetFormat(defaultData, defaultHeaders)
+          xs.loadData([xsData])
+        }
+
+        // Bind cell selection event
+        xs.on('cells-selected', (cell: any, range: { sri: number; sci: number; eri: number; eci: number }) => {
+          const cols = []
+          for (let i = Math.min(range.sci, range.eci); i <= Math.max(range.sci, range.eci); i++) {
+            cols.push(i)
+          }
+          setSelectedColumns(cols)
+        })
+
+        // Bind cell edited event (optional - for future use)
+        xs.on('cell-edited', (text: string, ri: number, ci: number) => {
+          console.log('Cell edited:', { text, ri, ci })
+        })
+
+        setSpreadsheet(xs)
+      } catch (error) {
+        console.error('Failed to load x-data-spreadsheet:', error)
       }
     }
-  }, [isLoading, spreadsheetData, storedHeaders])
+
+    initSpreadsheet()
+  }, [isLoading, spreadsheetData, storedHeaders, spreadsheet])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -278,42 +286,21 @@ export function VisualizationTab() {
   }
 
   const createSpreadsheetWithData = (headers: any[], rows: any[][]) => {
-    // Destroy existing spreadsheet
-    if (jspreadsheet && spreadsheetRef.current) {
-      jspreadsheet.destroy()
-    }
+    if (!spreadsheet) return
 
-    // Create new spreadsheet with uploaded data
-    if (spreadsheetRef.current && window.jspreadsheet) {
-      const table = window.jspreadsheet(spreadsheetRef.current, {
-        data: rows.length > 0 ? rows : Array(20).fill(null).map(() => Array(headers.length).fill('')),
-        columns: headers.map((header, i) => ({
-          type: 'text',
-          title: String(header || ''),
-          width: 120
-        })),
-        minDimensions: [headers.length, Math.max(rows.length, 20)],
-        allowInsertRow: true,
-        allowInsertColumn: true,
-        allowDeleteRow: true,
-        allowDeleteColumn: true,
-        allowRenameColumn: true,
-        contextMenu: true,
-        tableOverflow: true,
-        tableHeight: '600px',
-        tableWidth: '100%',
-        onselection: (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-          updateSelectedColumns(instance, x1, y1, x2, y2)
-        },
-      })
-      setJspreadsheet(table)
-      
-      // Save to visualization store
-      setSpreadsheetData(rows, headers, currentFilename)
-      
-      // Save dataset to store for Analysis page
-      saveDatasetToStore(headers, rows)
-    }
+    // Convert and load data into x-spreadsheet
+    const xsData = convertToXSpreadsheetFormat(
+      rows.length > 0 ? rows : Array(20).fill(null).map(() => Array(headers.length).fill('')),
+      headers
+    )
+    
+    spreadsheet.loadData([xsData])
+    
+    // Save to visualization store
+    setSpreadsheetData(rows, headers, currentFilename)
+    
+    // Save dataset to store for Analysis page
+    saveDatasetToStore(headers, rows)
   }
 
   const saveDatasetToStore = (headers: any[], rows: any[][]) => {
@@ -363,59 +350,21 @@ export function VisualizationTab() {
     }
   }
 
-  const handleAddRow = () => {
-    if (jspreadsheet) {
-      jspreadsheet.insertRow()
-    }
-  }
-
-  const handleDeleteRow = () => {
-    if (jspreadsheet) {
-      const selectedRows = jspreadsheet.getSelectedRows()
-      if (selectedRows && selectedRows.length > 0) {
-        jspreadsheet.deleteRow(selectedRows.length)
-      } else {
-        jspreadsheet.deleteRow()
-      }
-    }
-  }
-
-  const handleAddColumn = () => {
-    if (jspreadsheet) {
-      jspreadsheet.insertColumn()
-    }
-  }
-
-  const handleDeleteColumn = () => {
-    if (jspreadsheet) {
-      // Simply call deleteColumn - it deletes the currently selected column
-      jspreadsheet.deleteColumn()
-    }
-  }
-
-  const updateSelectedColumns = (instance: any, x1: number, y1: number, x2: number, y2: number) => {
-    const cols = []
-    for (let i = Math.min(x1, x2); i <= Math.max(x1, x2); i++) {
-      cols.push(i)
-    }
-    setSelectedColumns(cols)
-  }
-
   const handlePlot = () => {
-    if (!jspreadsheet || selectedColumns.length < 2) {
+    if (!spreadsheet || selectedColumns.length < 2) {
       alert('Please select at least 2 columns to create a plot')
       return
     }
 
-    const data = jspreadsheet.getData()
-    const headers = jspreadsheet.getHeaders().split(',')
+    // Get data from x-spreadsheet
+    const xsData = spreadsheet.getData()
+    const { data, headers } = convertFromXSpreadsheetFormat(xsData)
     
-    // Get column data
     const xCol = selectedColumns[0]
     const yCol = selectedColumns[1]
     
-    const xData = data.map((row: any[]) => row[xCol]).filter((val: any) => val !== '')
-    const yData = data.map((row: any[]) => row[yCol]).filter((val: any) => val !== '')
+    const xData = data.map((row: any[]) => row[xCol]).filter((val: any) => val !== null && val !== undefined && val !== '')
+    const yData = data.map((row: any[]) => row[yCol]).filter((val: any) => val !== null && val !== undefined && val !== '')
     
     const xLabel = headers[xCol] || `Column ${xCol + 1}`
     const yLabel = headers[yCol] || `Column ${yCol + 1}`
@@ -426,6 +375,9 @@ export function VisualizationTab() {
   }
 
   const generatePlot = (xData: any[], yData: any[], xLabel: string, yLabel: string) => {
+    // Use the user's chosen color
+    const traceColor = markerColor
+
     const trace: any = {
       x: xData,
       y: yData,
@@ -435,50 +387,70 @@ export function VisualizationTab() {
     if (plotType === 'scatter') {
       trace.type = 'scatter'
       trace.mode = 'markers'
-      trace.marker = { size: markerSize, color: markerColor }
+      trace.marker = {
+        size: markerSize,
+        color: traceColor,
+        opacity: 0.7,
+        symbol: 'circle',
+        line: { width: 0.5, color: '#000' },
+      }
     } else if (plotType === 'line') {
       trace.type = 'scatter'
       trace.mode = 'lines'
-      trace.line = { color: markerColor, width: 2 }
+      trace.line = { color: traceColor, width: 2, shape: 'linear' }
     } else if (plotType === 'bar') {
       trace.type = 'bar'
-      trace.marker = { color: markerColor }
+      trace.marker = { color: traceColor, line: { width: 0.5, color: '#000' } }
     } else if (plotType === 'scatter+line') {
       trace.type = 'scatter'
       trace.mode = 'lines+markers'
-      trace.marker = { size: markerSize, color: markerColor }
-      trace.line = { color: markerColor, width: 2 }
+      trace.marker = {
+        size: markerSize,
+        color: traceColor,
+        opacity: 0.7,
+        symbol: 'circle',
+        line: { width: 0.5, color: '#000' },
+      }
+      trace.line = { color: traceColor, width: 2, shape: 'linear' }
     }
 
-    const fontFamily = 'Arial, sans-serif'
-    const fontWeight = fontBold ? 'bold' : 'normal'
+    // Academic / publication font stack
+    const fontFamily = 'Inter, IBM Plex Sans, Helvetica Neue, Arial, sans-serif'
 
     setPlotData({
       data: [trace],
       layout: {
-        title: {
+        template: 'none',
+        title: plotTitle ? {
           text: plotTitle,
-          font: {
-            size: fontSize + 4,
-            family: fontFamily,
-            weight: fontWeight,
-          },
-        },
+          font: { size: fontSize + 2, family: fontFamily, color: '#111' },
+          x: 0.5,
+          xanchor: 'center',
+        } : undefined,
         plot_bgcolor: 'white',
         paper_bgcolor: 'white',
-        width: 600,
-        height: 600,
+        font: {
+          family: fontFamily,
+          size: fontSize,
+          color: '#111',
+        },
         xaxis: {
           title: {
             text: xAxisTitle,
-            font: { size: fontSize, family: fontFamily, weight: fontWeight },
+            font: { size: fontSize + 1, family: fontFamily, color: '#111' },
+            standoff: 12,
           },
           showline: true,
-          linecolor: '#000000',
-          linewidth: 2,
+          linecolor: '#000',
+          linewidth: 1,
           ticks: 'outside',
+          ticklen: 5,
+          tickwidth: 1,
+          tickcolor: '#000',
+          tickfont: { size: 11, family: fontFamily, color: '#333' },
           showgrid: showGrid,
-          gridcolor: '#e5e5e5',
+          gridcolor: showGrid ? 'rgba(0,0,0,0.05)' : undefined,
+          gridwidth: showGrid ? 1 : undefined,
           mirror: false,
           zeroline: false,
           nticks: xTickCount,
@@ -486,45 +458,54 @@ export function VisualizationTab() {
         yaxis: {
           title: {
             text: yAxisTitle,
-            font: { size: fontSize, family: fontFamily, weight: fontWeight },
+            font: { size: fontSize + 1, family: fontFamily, color: '#111' },
+            standoff: 8,
           },
           showline: true,
-          linecolor: '#000000',
-          linewidth: 2,
+          linecolor: '#000',
+          linewidth: 1,
           ticks: 'outside',
+          ticklen: 5,
+          tickwidth: 1,
+          tickcolor: '#000',
+          tickfont: { size: 11, family: fontFamily, color: '#333' },
           showgrid: showGrid,
-          gridcolor: '#e5e5e5',
+          gridcolor: showGrid ? 'rgba(0,0,0,0.05)' : undefined,
+          gridwidth: showGrid ? 1 : undefined,
           mirror: false,
           zeroline: false,
           nticks: yTickCount,
         },
         showlegend: showLegend,
         legend: {
-          font: { size: fontSize - 2 },
+          font: { size: 11, family: fontFamily, color: '#333' },
+          bgcolor: 'rgba(0,0,0,0)',
+          borderwidth: 0,
           orientation: 'v',
           x: 1,
           y: 1,
           xanchor: 'right',
           yanchor: 'top',
-          bgcolor: 'rgba(255,255,255,0.8)',
-          bordercolor: '#cccccc',
-          borderwidth: 1,
         },
-        autosize: false,
-        margin: { l: 60, r: 20, t: 60, b: 60 },
+        hovermode: 'closest',
+        autosize: true,
+        margin: { l: 60, r: 20, t: plotTitle ? 40 : 20, b: 50 },
       },
-      config: { 
-        responsive: false,
-        scrollZoom: true,
+      config: {
+        displayModeBar: false,
+        responsive: true,
+        scrollZoom: false,
       },
     })
   }
 
   // Update plot when settings change
   useEffect(() => {
-    if (plotData && jspreadsheet && selectedColumns.length >= 2) {
-      const data = jspreadsheet.getData()
-      const headers = jspreadsheet.getHeaders().split(',')
+    if (plotData && spreadsheet && selectedColumns.length >= 2) {
+      // Extract data from x-spreadsheet
+      const sheetData = spreadsheet.getData()
+      const { data, headers } = convertFromXSpreadsheetFormat(sheetData[0])
+      
       const xCol = selectedColumns[0]
       const yCol = selectedColumns[1]
       const xData = data.map((row: any[]) => row[xCol]).filter((val: any) => val !== '')
@@ -547,7 +528,7 @@ export function VisualizationTab() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="flex flex-col bg-white rounded-xl border shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 180px)', minHeight: '600px' }}>
       {/* Header Dialog */}
       <Dialog open={showHeaderDialog} onOpenChange={setShowHeaderDialog}>
         <DialogContent>
@@ -586,8 +567,8 @@ export function VisualizationTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Toolbar */}
-      <div className="border-b bg-gray-50 p-3 flex items-center gap-3 flex-shrink-0">
+      {/* Minimal Toolbar */}
+      <div className="border-b bg-white px-3 py-2 flex items-center justify-between flex-shrink-0">
         <input
           ref={fileInputRef}
           type="file"
@@ -606,74 +587,30 @@ export function VisualizationTab() {
           Upload File
         </Button>
 
-        <div className="h-6 w-px bg-gray-300" />
-
-        <Button
-          onClick={handleAddRow}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Row
-        </Button>
-
-        <Button
-          onClick={handleDeleteRow}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          Delete Row
-        </Button>
-
-        <Button
-          onClick={handleAddColumn}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Column
-        </Button>
-
-        <Button
-          onClick={handleDeleteColumn}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          Delete Column
-        </Button>
-
-        <div className="h-6 w-px bg-gray-300" />
-
         <Button
           onClick={handlePlot}
           disabled={selectedColumns.length < 2}
           size="sm"
-          className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
         >
-          <TrendingUp className="h-4 w-4" />
-          Plot {selectedColumns.length >= 2 ? `(${selectedColumns.length} cols)` : ''}
+          <BarChart3 className="h-4 w-4" />
+          {selectedColumns.length === 0 
+            ? 'Select Columns to Plot' 
+            : selectedColumns.length === 1
+            ? 'Select 1 More Column'
+            : `Plot ${selectedColumns.length} Columns`}
         </Button>
-
-        <div className="ml-auto text-xs text-gray-500">
-          Excel-like Spreadsheet • Click column headers to rename
-        </div>
       </div>
 
       {/* Split Container - Fixed 50/50 */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Spreadsheet */}
         <div 
-          className="overflow-x-auto overflow-y-auto border-r"
+          className="overflow-hidden border-r"
           style={{ width: '50%' }}
         >
-          <div className="p-4 min-w-max">
-            <div ref={spreadsheetRef} />
+          <div className="h-full w-full">
+            <div ref={spreadsheetRef} className="h-full w-full" />
           </div>
         </div>
 
@@ -683,14 +620,15 @@ export function VisualizationTab() {
           style={{ width: '50%' }}
         >
           {/* Plot Area */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto" style={{ minHeight: '400px' }}>
             {plotData ? (
-              <div className="h-full p-4">
+              <div className="h-full p-4" style={{ minHeight: '400px' }}>
                 <Plot
                   data={plotData.data}
                   layout={plotData.layout}
                   config={plotData.config}
                   style={{ width: '100%', height: '100%' }}
+                  useResizeHandler={true}
                 />
               </div>
             ) : (
@@ -743,15 +681,20 @@ export function VisualizationTab() {
                   />
                 </div>
 
-                {/* Marker Color */}
+                {/* Trace Color */}
                 <div className="space-y-2">
-                  <Label className="text-xs">Marker Color</Label>
-                  <Input
-                    type="color"
-                    value={markerColor}
-                    onChange={(e) => setMarkerColor(e.target.value)}
-                    className="h-8"
-                  />
+                  <Label className="text-xs">Color</Label>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {['#2E3440','#5E81AC','#A3BE8C','#BF616A','#D08770','#B48EAD','#4C566A','#88C0D0'].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setMarkerColor(c)}
+                        className={`w-6 h-6 rounded-sm border ${markerColor === c ? 'border-black ring-1 ring-black' : 'border-gray-300'}`}
+                        style={{ backgroundColor: c }}
+                        title={c}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* Font Size */}

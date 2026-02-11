@@ -1,1 +1,10 @@
-
+node_modules/
+.next/
+tsconfig.tsbuildinfo
+firebase-debug.log
+*.bak
+*.bak2
+*.bak3
+.copilot-memory.md
+external-libs/
+.vercel
